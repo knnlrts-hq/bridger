@@ -1,0 +1,25 @@
+https://www.swift.com/products/3skey (Swift Secure Signature Key) is a Swift product that is being used primarily by our French clients. It is a Swift product not related in any way with the Swift network. Some of our customers use it on EBICS.
+
+A pilot around 3SKey Digital was started about a year ago. While there seems to be a trend to abandon individual signing, it is possible that the relaunch as a digital solution invigorates demand.
+
+Solution:
+The 3SKey offering consists of 2 components:
+1. The 3SKey signing app: https://docs.developer.swift.com/docs/api-guides/3skey-signing-api
+2. The Swift Digital ID mobile app: https://apps.apple.com/be/app/swift-digital-id/id6733252514
+
+The way it works is extremely similar to the very popular itsme system in Belgium: click a link or a button in an application or a website triggers an authentication or signing request, and tells the user to open the mobile app, the user can then confirm the request directly, sometimes has to select from a list a symbol shown in the originating system and/or has to provide a PIN code. A windows app is on the roadmap for september 2026.
+
+Banks can order a number of tokens that they can distribute among their clients, grouping users per corporate. The bank can decide to administer corporates directly, or delegate administration to the corporates, but the corporate administrator requires a hardware token. The subscriber token cannot be used as corporate admin. Assigning a digital token to a user is just a matter of entering their name, email, phone number, etc. in a management console. The user receives an email with a link to start the activation process that involves installing and opening the mobile app, copy/pasting/typing an activation code from the email in it and verifying their phone number by sending a 5-digit code to it that needs to be entered in the app. Setting a PIN code concludes the activation process.
+
+A token can be activated and reactivated by an administrator, and it can also be revoked. Revoking is a definitive action and cannot be reverted; if the user needs a token in the future, the process will have to be initiated again. Tokens will be valid for 3 years. Failure to provide the correct PIN will be sanctioned after 3 attempts (3 hours lockout), 6 attempts (24 hours lockout) and finally 9 attempts (disabled). In urgent situations, the lockout can be cancelled by an administrator, but the user will still need their PIN; it is NOT stored by Swift and cannot be recovered.
+
+The physical 3SKey tokens will not be sold anymore after september 2026, with all support ending september 2029. A token (or Swift Digital ID) can be used by a user for placing signatures with multiple banks, but only one bank will be the subscriber that issued it to them. The cost is approximately 50 EUR per token per year (calculated per quarter). All support is handled via email (SLA of 24 hours).
+
+Technical:
+Hardware tokens use 2Kbit certificates, the new digital ones are 6Kbit.
+SMPC: part of the token's certificate is stored on the user's mobile device (protected by the PIN code of the user), and the other part is stored on a Swift server; both parts are required to authenticate or sign. 
+The TLS certificate is valid for 5 years. Support for parallel validity of certificates is on the roadmap for 26H1. 
+There is a lot of up-to-date documentation: https://www2.swift.com/knowledgecentre/products/3skey 
+The APIs are standard and simple, well documented: https://docs.developer.swift.com/docs/api-guides/3skey-signing-api 
+As a partner/provider implementing this solution, we can order a subscriber (hardware) token 
+There is not really a sandbox environment, we need to create an app and promote it to production right away (only possible if you are authenticated via a swift.com account).

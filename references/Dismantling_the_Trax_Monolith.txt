@@ -1,0 +1,343 @@
+Dismantling the Trax Monolith: A Strategic Roadmap
+Trax
+
+Exported on 06/04/2025
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+Table of Contents
+1
+
+Background ............................................................................................................... 3
+
+2
+
+The Challenge: The Legacy Burden ......................................................................... 4
+
+3
+
+The Vision: A Microservices and Event Driven Future ............................................ 5
+
+4
+
+State of the Nation: The Current Platform Landscape ........................................... 6
+
+5
+
+The Transformation Journey: An Iterative Approach ............................................. 7
+
+5.1 Phase 1 ...................................................................................................................... 8
+5.2 Phase 2 ...................................................................................................................... 9
+5.3 Phase 3 .................................................................................................................... 10
+5.4 Phase 5 .................................................................................................................... 12
+5.5 Deployment View .................................................................................................... 12
+
+2
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+1 Background
+Payment Hub, a financial application facilitating corporate to corporate fund transfers, has been a
+cornerstone of FIS(T&R) for over two decades. With more than 150 clients already onboarded and a steady
+annual growth, it stands as our flagship product. However, over time, the application has evolved into a
+monolithic platform, posing significant challenges in areas such as client onboarding, clients upgrades,
+operational excellence and innovation.
+
+Background – 3
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+2 The Challenge: The Legacy Burden
+The current monolith architecture, over time, has become a bottleneck to innovation, and scalability,
+hindering our ability to meet evolving business needs and maintain a competitive edge. The following points
+details the specifics issues stemming from this legacy system:
+• Monolithic Architecture Limitation: The current platform architecture has become a 'big ball of mud'
+overtime, making it difficult to understand, change and maintain.
+• Code Complexity & Technical Debt: Thousands of lines of code have created a significant technical
+debt, slowing development, and increasing risk of bugs.
+• Lack of Documentation: The aging codebase suffers from lack of comprehensive up-to-date
+documentation, making it even more difficult for developers to understand, maintain and debug the
+system.
+• Limited Team Knowledge: "Bus Factor" is high, meaning the platform knowledge resides with a small
+group, creating single point of failure for understanding and maintenance.
+• Slow Development Cycle: Changes requires review by a small group of reviewers, extensive testing
+and coordination, leading to long release cycle and delayed time to market.
+• Scaling Challenges: Scaling the entire monolith is inefficient and costly, individual components
+cannot be scaled independently.
+• High Maintenance Costs: Significant resources are dedicated to maintaining the aging codebase,
+leaving less for innovation.
+• Deployment Bottleneck: Frequent deployments are risky, time consuming, and complex, hindering
+continuous delivery.
+• Risk of Single Point of Failure: A failure in one part of the monolith can bring down the entire system.
+• Difficulty in Adopting New Technologies: Integrating new technologies into a monolithic architecture
+is challenging and often risky.
+• Outdated UI: Current GUI experience and technology is completely outdated and difficult to maintain.
+• Lagging Behind Competitors: Our competitors, leveraging more modern architecture, are able to
+introduce new features and adapt to market changes faster, putting us at a disadvantage.
+• Complex Customer Onboarding and Upgrades: Configuring new customers platforms and upgrading
+existing customer platforms is complicated, time consuming, and expensive due to tightly coupled
+nature of the monolith.
+• Difficulty Meeting Non-Functional Requirements: The monolith struggles to meet modern nonfunctional requirements around security, scalability, resilience, observability, performance, and user
+experience requirement like accessibility.
+• Data Achieving Challenges: Due to the monolithic database structure, achieving older data is
+complex, and negatively impact performance. This makes it difficult to manage data growth and
+comply to data retention and governance policies.
+
+The Challenge: The Legacy Burden – 4
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+3 The Vision: A Microservices and Event Driven Future
+The vision is to decompose the ‘monolith’ into highly scalable, event-driven microservices, which are cloud
+native and cloud vendor agnostic. This architecture will have the following features:
+• Microservices Architecture: Independent, deployable services focused on specific business
+capabilities.
+• Event Driven Design: Asynchronous communication between services via events promoting loose
+coupling and improved performance.
+• Decoupled Micro Front End: Independent, deployable UI owned by individual micro services teams.
+Each team can work on and release their UI changes independently, without being blocked by other
+teams or monolith.
+• Improved Scalability: Independent scaling of services based on demand, optimizing resources
+utilization and cost.
+• Enhanced Resilience: Fault isolation, failures in one service do not necessarily impact others.
+• Faster Development Cycles: Smaller, focused teams can work independently, accelerating
+development, deployment and releases.
+• Easier adoption of New Technologies: Flexibility to choose the best tool for each service, fostering
+innovation.
+• Reduced Maintenance Cost: Simplified codebase, reduced blast radius, comprehensive
+documentation will reduce development and maintenance cost.
+• Foster Innovation: The microservices architecture will enable faster innovation cycles, allowing us to
+quickly develop and deploy new features and services.
+• Competitive Advantage: A modern, flexible architecture will allow us to better compete with
+competitors by enabling faster adaptation to market changes and the rapid introduction of new
+features.
+• Enhanced Security: Microservices can be secured individually, simplifying the application security
+patches and improving overall platform security.
+• Improved Observability: Individual services are easier to monitor and troubleshoot, providing better
+insights into platform health and performance.
+• Simplified Archiving: Decoupled data stores associated with individual microservices will simplify
+data archiving and enable more granular control over data retention and governance policies.
+• Simplified and Cost Effective Customer Onboarding and Upgrades: The decoupled nature of the
+microservices simplifies and makes more cost-effective configuration of new customers platforms
+and the upgrading of existing ones.
+
+The Vision: A Microservices and Event Driven Future – 5
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+4 State of the Nation: The Current Platform Landscape
+We have already embarked on our monolith decomposition journey, making a decent progress. The Direct
+Debit Engine, Bank Connector and Batch Approval components have been successfully extracted and are
+now operating as independent microservices. Bank Reporting is currently in progress, undergoing migration
+to a microservices architecture as well. However, the remaining monolith still houses several key
+functionalities, Scheduler, Workers, GUI, Reporting, Config, Payment Factory, Cash Flow generation,
+Reconciliation and Elastic Search.
+While we have migrated some services to a microservices architecture, inconsistencies in their
+implementation have emerged. A key part of our ongoing modernization effort will also be aligning these
+services to ensure a cohesive and standardized approach across our microservices ecosystem.
+
+Relevant points about the microservices in the current state:
+• Bank Connector is only used in communications with Bank. It has potential to handle all
+communications such as with ERP systems and Treasury management systems.
+• Direct Debit workflow is partially implemented in new microservices and partially in Trax
+• One GUI is only available for PHSE customers
+• Approval service is currently only implemented for PAY workflow. It also does not have support for all
+the Signing methods.
+
+State of the Nation: The Current Platform Landscape – 6
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+5 The Transformation Journey: An Iterative Approach
+This transformation is a multi-year journey and requires a careful planning and execution. Throughout this
+process, we must ensure uninterrupted service, continuing to onboard new customers, upgrade existing
+customers platforms, add new features, and adhere to evolving regulations and compliance requirement, all
+while modernizing the platform.
+These principles will guide our multi-year monolith transformation, ensuing we balance modernization with
+ongoing business needs and minimize disruption.
+• Iterative Approach: The transformation will be executed iteratively, adding value in each iteration,
+also allowing us to learn and adapt along the way, minimizing risk and maximizing flexibility.
+• Business Value Driven: Prioritization of service extraction will be driven by business value, focusing
+on areas that deliver greatest impact and return of investment.
+• Continuous Delivery and Minimal Disruption: We will prioritize continuous delivery of new features
+and maintain uninterrupted service to existing customers throughout the transformation. Disruption
+to ongoing operation will be minimised at every stage.
+• Building New Business Features as Microservices: All new business features will be developed as
+independent microservices from the outset, ensuring no wasted effort on building within the monolith
+and accelerating to a fully microservices based platform.
+• Compliance and Regulatory Adherence: Adherence to all relevant regulations and compliance
+requirements will be maintained throughout the modernization process.
+• Shift Left and Robust Testing: We will implement a shift left testing approach, integrating testing
+throughout the development lifecycle, from unit tests, component tests, contract test, security tests
+and end to end tests. The end to end testing framework will be upgraded to support microservices
+based new platform end to end testing.
+• Continuous Monolith Optimisation: The remaining monolith will be continuously refactored and
+optimised as functionalities are migrated, improving its maintainability and performance.
+• Platform Configuration Blueprint: A comprehensive platform configuration blueprint will be
+developed and maintained throughout this journey, ensuring consistency and repeatability in
+customer onboarding and upgrading their platforms.
+• Comprehensive Documentation: We will create and maintain comprehensive documentation
+including service documentation, product manuals, and runbooks, to facilitate knowledge sharing,
+improve maintainability and streamline operations.
+In our recent workshop in Brussels, we reviewed the platform's current state, and brainstormed to produce a
+transformation strategy. The outcome of this workshop is a multi phase / iteration roadmap based on the
+above principles which will guide the platform evolution:
+
+The Transformation Journey: An Iterative Approach – 7
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+5.1 Phase 1
+
+In this iteration, we will try to achieve the following:
+• Config Orchestrator
+a. Currently Trax is used as a Config Server and every microservice is calling Config Server. Trax
+works with a limited set of, and hence we have issues, when workers demand is high.
+b. In this iteration, we will build a Config Orchestrator as a new microservice, it will pull data from
+the Trax Monolith during it start up, and then store it locally. This data will be versioned and
+tenant specific.
+c. All new microservices will use the Config Orchestrator, while Trax components will continue
+using the existing mechanism to pull configuration data.
+• Bank Connector - Communication Service
+a. Bank Connector will be rebranded as Communication Service
+b. Run mode will be added to it.
+c. It will continue using Artemis, and the data transfer will be value based and encrypted.
+• Bank Reporting
+a. We will align the tech implementation across all microservices and prefer a cloud agnostic
+approach
+b. Kafka will replace SQS as Event Bus.
+c. We will integrate with the Config Orchestrator service and remove Elasticache Redis for cost
+optimization.
+• File Mapper
+a. Currently Direct Debit uses Trax for communications. The incoming file is parsed in Trax using
+File mapper and events are generated on Kafka.
+b. We would like to move this File Mapper as a standalone microservice, so that it can be used
+initially for Direct Debit and, in the future, for other formats.
+c. The File Mapper supports Groovy DSL, and we can use as library for all ERP/TMS/Bank
+formats.
+
+The Transformation Journey: An Iterative Approach – 8
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+• Logi Replacement(Refer here fore more detailed strategy: Logi replacement Strategy1)
+a. We will start with basic POC and solution design.
+b. Client Communication - Informing the Logi replacement situation, asking for upgrade to public
+cloud
+
+5.2 Phase 2
+
+In this iteration, we will try to achieve the following:
+• Automated Test Framework (ATF)
+a. Currently, ATF resides within Trax and is mainly used for black box testing of Trax. Some
+customers also use ATF.
+b. ATF will be extracted from Trax Monolith as ATF 2.0 and should be usable for black box
+testing across multiple microservice at the Payment Hub level.
+• Communication Service
+a. Replace Artemis by Kafka
+b. Input files will be stored in Cloud Storage (AWS S3 or Azure Blob Storage) and a reference to
+the data with other meta data will be puhsed to Kafka as an event
+c. Communication Service UI will be merged with One GUI and security will be behind Overtow /
+Security proxy.
+• File Mapper
+a. The File mapper will start supporting payment formats (steps towards Payment microservice)
+b. The File Mapper will parse the payment file and convert text to JSON event.
+c. These JSON events will be consumed by Trax and persisted to Payment Model. (Payment
+processing is still done in Trax in this phase)
+d. This will help us build a Conceptual JSON model for a future Payment microservice.
+• Approval
+a. Currently, Payment Approval Service only supports Password and TOTP approvals.
+
+1 https://wiki.fisglobal.com/display/trax/Logi+replacement+Strategy
+
+The Transformation Journey: An Iterative Approach – 9
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+b. For all French customers, we need hardware approvals and currently only supported in Trax
+and Trax signing Application
+c. Trax Signing Application has lots of other limitations - works with electrons, need to ship
+separate installer, need to install on each client laptop, difficult to maintain etc.
+d. We will update Approval service to support browser plugins for hardware reading.
+e. This will eliminate the Trax signing Application and its limitations
+• Bank Reporting
+a. Account Statement, Intraday Statements, Debit-Credit is linked with the Payments (Has
+information or Transactional info)
+b. After this iteration, we will have linking between Payment and Bank Reporting (reconciliation)
+c. For our We will be moving towards first customer (currently PPRO is interested) & will have/
+map with customer requirements
+• Scheduler Service
+a. Trax has a scheduler service and is used for all scheduling activities
+b. Each microservices also require a scheduler (Currently dependent on Trax).
+c. New Service will still refer to configuration in Trax but generate events on Kafka & Artemis so
+that each microservice and Trax will consume those events
+• Logi Replacement
+a. Current schedule reports of Logi will get converted into Birt
+b. Will have information on which Logi Analytics and Operational reports are used by which
+client (Plan to decommission all unused reports)
+
+5.3 Phase 3
+
+In this iteration, we will try to achieve the following:
+• Bank reporting
+a. Account Statement, Intraday Statements, Debit-Credit will generate Cash Flow, Postings
+b. We will be ready for go live with PPRO
+• Direct Debit
+
+The Transformation Journey: An Iterative Approach – 10
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+a. For features like Signing, Warehouse we send data to Trax using DD-read model
+b. Will start moving to new storage (no more read model service)
+c. For Signing we will depend on Approval microservice, Warehouse will depend on New GUI
+(Actions)
+• One GUI
+a. It will now be available for all enterprise customers.
+• Logi replacement
+a. Replace Analytics and dashboards with new solution
+
+Phase 4
+
+In this iteration, we will try to achieve the following:
+• Bank reporting
+a. Current File Parsing for CAMT & MT940 formats are part of Bank reporting service.
+b. We would start aligning them to FileMapper.
+• Direct Debit
+a. After this iteration there will be no link to Trax.
+b. This will be foundation or say 80% ready for Payment Service
+• Logi replacement
+a. Rolling out the replacement to Customers
+
+The Transformation Journey: An Iterative Approach – 11
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+5.4 Phase 5
+
+Final State of the application
+• Communication Service: All communication into and out of Payment Hub will happen through
+Communication Service
+• One GUI: All user interactions with the application will go through Security Proxy and handled at One
+GUI. This will also take care of multi-tenant user access. New screens will be built for the new
+backend services.
+• Event Driven: All microservice communication will be based on events published on Kafka, except in
+few cases where data is being queried, in which case REST APIs will be used.
+• Engines: Multiple engines will process the individual items in a stateless manner
+• Multi-tenancy: All services will be multi-tenant capable.
+• Config API: The monolith Trax will be reduced to just the Config API, once all the other logical
+modules are moved out into microservices.
+
+5.5 Deployment View
+A view of how the microservices and related infrastructures will be deployed in AWS cloud. For more details
+you can refer here2.
+
+2 https://wiki.fisglobal.com/display/trax/Microservices
+
+The Transformation Journey: An Iterative Approach – 12
+
+Trax – Dismantling the Trax Monolith: A Strategic Roadmap
+
+The Transformation Journey: An Iterative Approach – 13
+
+

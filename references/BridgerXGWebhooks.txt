@@ -1,0 +1,768 @@
+IMPLEMENTATION GUIDE
+
+Webhooks
+
+in LexisNexis® Bridger Insight® XG (XG) 5
+
+BIS436-EN_US — 17 July 2023
+CONFIDENTIAL
+
+CONFIDENTIAL
+
+The recipient of this material (hereinafter “the Material”) acknowledges that it contains confidential
+and proprietary data the disclosure to, or use of which by, third parties will be damaging to LexisNexis
+Risk Solutions and its affiliated companies (hereinafter “LexisNexis Risk Solutions”). Therefore, recipient
+agrees to hold the Material in strictest confidence, not to make use of it other than for the purpose for
+which it is being provided, to release it only to employees requiring such information, and not to release
+or disclose it to any other party. Upon request, recipient will return the Material together with all copies
+and modifications, if any, to LexisNexis Risk Solutions.
+LexisNexis Risk Solutions shall not be liable for technical or editorial errors or omissions contained
+herein. The information in this publication is subject to change without notice and is provided “as-is”
+without a warranty of any kind. Nothing herein should be construed as constituting a warranty, as any
+applicable warranty is exclusively contained in your signed agreement with LexisNexis Risk Solutions.
+All names, addresses, birth dates or other identifying information in the text, or on the sample reports
+and screens shown in this document, are of fictitious persons and entities and have been created for
+illustrative purposes only. Any similarity to the name of any real person, school, business, other entity,
+address, date of birth, or other identifying information is purely coincidental.
+LexisNexis and the Knowledge Burst logo are registered trademarks of RELX Inc. Bridger Insight is a
+registered trademark of LexisNexis Risk Solutions Inc. Other products and services may be trademarks or
+registered trademarks of their respective companies.
+© 2023 LexisNexis Risk Solutions
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 2
+
+CONFIDENTIAL
+
+Co n t ent s
+Webhooks in Bridger Insight XG 5. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .4
+About This Publication. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+Audience. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+Content. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+Conventions. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+Publication Suggestions. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+Customer Support. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+Customer Support Hub. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+Webhooks in Process. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+Alert State Closed Event. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+Payload Elements for the Alert State Closed Event. . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+Alert Decision Applied Event. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+Payload Elements for the Alert Decision Applied Event. . . . . . . . . . . . . . . . . . . . . . . . 11
+Webhooks Setup. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+Configure Webhooks in Enterprise Manager. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .12
+Set Up Roles with the Webhooks Privileges. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+Add a Webhook. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .13
+Edit a Webhook. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .14
+Delete a Webhook. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+Payload Validation. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .15
+Verify a Payload. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .15
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 3
+
+CONFIDENTIAL
+
+W e bho ok s in Bridger Insight XG 5
+LexisNexis® Bridger Insight® XG (XG) offers webhooks to send real-time notifications to your
+organization's receiving application about certain changes made during alert processing. You can
+integrate these notifications into your procedures outside of the product.
+Webhooks provide automated efficiency, easier compliance, and reduced friction by alleviating the need
+to repeatedly search the XG database for possible changes. Instead, you can be notified as changes
+occur, allowing you to quickly prioritize and act as needed based on the alert's progress.
+For example, if an alert is closed with a Transaction Approved status, then you may want to take
+the next onboarding steps with your customer. If an alert is assigned to a compliance officer, which
+may indicate that the alert requires further due diligence, then you may need to request additional
+information from your customer.
+You can be notified when the state of the alert is closed and what the final status was set to. You can also
+be notified when other actions are taken on an alert. These actions include changing the state, status, or
+assignment; adding the alert to an accept list or custom screening list; adding a decision tag or note; or
+adding or deleting a file attachment.
+
+About This Publication
+LexisNexis® Risk Solutions provides the information in this publication to help you understand the
+benefits of webhooks and how to set up webhooks in XG.
+
+Au d i e n c e
+Personnel who have a strong understanding of the needs of your organization and have the
+responsibility to set up the product should read this content.
+You should have a good understanding of JSON (JavaScript object notation) payloads and HMAC (hashbased message authentication code) secrets.
+
+Con t e nt
+This guide describes the benefits of webhooks in XG and how to configure XG to send webhook payloads.
+This guide does not describe how to set up your receiving application or manage payloads.
+The content is presented with the assumption that users have full access to XG. However, users at your
+organization may have limited access to functionality due to the product settings. For example, user
+access can be limited to specific areas of the product, specific lists or alerts, or specific tasks.
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 4
+
+CONFIDENTIAL
+
+Co n v e n t io ns
+This publication uses various conventions to provide information in a standardized format.
+
+In fo rm a t i o n I co n s
+LexisNexis Risk Solutions uses icons to highlight specific types of information.
+This note icon precedes important information.
+This tip icon precedes helpful information.
+This warning icon precedes information that is intended to help prevent you from negatively
+affecting your processes.
+
+In st r uc t i o n s
+This publication provides the necessary steps to complete tasks in the product. These instructions may
+include task results or other information to keep in mind as you complete the steps.
+Right-click menus are not described in the instructions unless the menu is the only way to perform an
+action.
+Text that you are instructed to enter is displayed in a different font. The following sentence includes an
+example of text to be entered:
+To search for a user name that contains admin, enter the following text in the find field: admin.
+
+P ub l i c a t i on S u gge s tio ns
+Your suggestions for publication improvements are welcome.
+Send comments or suggestions to: TechnicalPublications@lexisnexisrisk.com.
+
+Customer Support
+Support and resources are available to XG clients who have purchased the product. The level of support
+that LexisNexis Risk Solutions provides varies based on the complexity of the XG installation and the
+contracted terms. For more information about the contracted terms, contact your sales representative.
+For more information, see the Customer Support for LexisNexis® Bridger Insight® XG technical reference
+guide at https://lnrs.force.com/CustomerSupportHub/s/article/1992.
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 5
+
+CONFIDENTIAL
+
+Cu st o m er S u ppo r t Hub
+The LexisNexis® Risk Solutions Customer Support Hub provides access to web-based support for XG.
+You can access the following resources at https://lnrs.force.com/CustomerSupportHub/s/:
+Knowledge Base
+The knowledge base provides articles to help you quickly learn more about a specific topic or to
+troubleshoot issues. The knowledge base also provides articles that contain technical documentation
+that you can download.
+For a list of technical documentation, view the library article at https://lnrs.force.com/
+CustomerSupportHub/s/article/2057.
+Support Requests
+You can submit and manage support requests and chat live with a support representative.
+Training
+You can access self-paced courses or register for instructor-led courses that are delivered by webinar.
+Based on contracted terms, your customer contact can also schedule a remote or on-site training
+session with your technical account manager (“TAM”) to refresh your end users, customer contacts,
+and administrators about product features and processes.
+User Profile and Settings
+You can manage the settings for your profile, account, and email notifications.
+To access support and resources, you need a user account to access the Customer Support Hub.
+
+R e q ue s t A cces s to t h e Customer Support Hub
+You need a user account to access the Customer Support Hub.
+Procedure:
+
+1.
+
+Go to https://lnrs.force.com/CustomerSupportHub/s/.
+
+2.
+
+Click Contact Support, and click your industry.
+
+3.
+
+Click your product.
+
+4.
+
+Provide your information, and indicate that you want access to the Customer Support Hub.
+
+5.
+
+Click Submit.
+
+Result:
+
+After LexisNexis® Risk Solutions Customer Support creates your user account, you receive an email
+notification with your credentials.
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 6
+
+CONFIDENTIAL
+
+W e bho ok s in Proces s
+Webhooks send real-time notifications from XG when specified events occur in the user interface, REST
+API, or SOAP API.
+Notifications can be sent for the following events:
+• The alert state is closed for a single alert.
+• An alert decision is applied to a single alert.
+This event also includes a file being attached to or deleted from a single alert.
+You should only use one active webhook at a time for each event type. If you have active webhooks for
+both event types, then multiple notifications are sent when the change meets the criteria for each. For
+example, closing an alert state would cause two notifications to be sent.
+Notifications are sent when an alert decision is applied to a single alert using the following API
+(application programming interface) methods:
+• SetRecordState
+Changes to the Division element do not send notifications.
+• AddResultRecord
+• AddAttachment
+This method is currently not supported in REST API.
+• DeleteAttachment
+This method is currently not supported in REST API.
+The notifications are sent as a JSON payload over HTTPS in a POST request to the URL of your
+organization's receiving application.
+A payload is not sent when alerts are changed through a multiple entity process.
+Your personnel needs the skills to set up the receiving application and manage the JSON payloads.
+LexisNexis Risk Solutions does not assist with the support of the receiving application.
+LexisNexis Risk Solutions expects the receiving application to be available to receive payloads for a
+minimum of 12 hours per day. If the payload is not successfully delivered, then XG reattempts the
+delivery every 30 minutes for 24 hours. If the payload is not successfully delivered after 24 hours, then
+the webhook is automatically disabled and the payload is deleted.
+If the payload URL is disabled or deleted when a retry is attempted, then future retries of that event are
+prevented. However, if the payload URL is disabled and then re-enabled before the retry, future attempts
+to deliver the payload continue.
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 7
+
+CONFIDENTIAL
+
+Webhooks Security
+XG signs payloads with your provided HMAC secret. This security feature allows you to verify the
+authenticity and integrity of the payloads. The secret is not displayed in XG after the webhook is saved.
+The payloads do not include any PII (personally identifiable information).
+XG Service clients should allow connections to the IP addresses that are provided by LexisNexis Risk
+Solutions.
+
+Alert State Closed Event
+XG can send a payload when the alert state is closed for a single alert.
+Payload Example
+
+The following payload example shows the type of data that is sent when an alert state is closed and
+changes are made to all of the alert decision fields.
+{
+"ResultId": 1234567,
+"EventType": "AlertClosed",
+"Status": "Blocked Account",
+"DateCreated": "2023-04-22T12:10:40Z",
+"DateModified": "2023-04-24T12:10:59.622Z",
+"State": "Closed",
+"Note": 1,
+"AssignedTo": "Administrator",
+"AssignmentType": "Role",
+"DecisionTags": [
+"NeedsReview"
+],
+"AddedToCSL": 1,
+"AddedToAcceptList": 1
+}
+
+P a yl o ad El em en ts f o r the Alert Sta te C losed Event
+The payload that XG sends to your receiving application for the alert state closed event contain various
+elements.
+Some elements may not be included in the payload if no change occurred to the related field.
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 8
+
+CONFIDENTIAL
+
+Payload Elements
+Name
+
+Type
+
+Description
+
+ResultId
+
+Long
+
+EventType
+Status
+
+String
+String
+
+The ResultId element contains the system-generated number
+that identifies the alert.
+The EventType element contains the alert event type.
+The Status element contains the alert status.
+None indicates that the status has been cleared on the alert.
+
+DateCreated
+
+DateTime
+
+DateModified
+
+DateTime
+
+EFTId
+
+Long
+
+State
+
+String
+
+Note
+AssignedTo
+
+Boolean
+String
+
+AssignmentType
+
+String
+
+DecisionTags
+
+List<String>
+
+AddedtoAccept
+List
+
+Boolean
+
+The DecisionTags element contains the decision tags that were
+applied to the alert.
+1 indicates that the alert was added to an accept list.
+
+AddedtoCSL
+
+Boolean
+
+1 indicates that the alert was added to a custom screening list.
+
+BIS436-EN_US — 17 July 2023
+
+The DateCreated element contains the date (YYY-MM-DD) and
+the 24-hour local time (HH:MM:SS) that the alert was created.
+The DateModified element contains the date (YYY-MM-DD) and
+the 24-hour local time (HH:MM:SS) that the alert was modified.
+The EFTId element contains the EFT (electronic funds transfer) ID
+of the alert.
+The State element contains the alert state.
+Possible values:
+• Closed
+• Open
+• Unassigned
+1 indicates that a note was added to the alert.
+
+The AssignedTo element contains the user or role that the alert
+was assigned to.
+The AssignmentType element contains the assignment type.
+Possible values:
+• Role
+• Unknown
+Unknown indicates that the assignment has been cleared on
+the alert.
+• User
+
+Webhooks in XG 5 Page 9
+
+CONFIDENTIAL
+
+Alert Decision Applied Event
+XG can send a payload when an alert decision is applied to a single alert or a file is attached to or deleted
+from a single alert.
+Payload Example When All Alert Decision Fields Change
+
+The following payload example shows the type of data that is sent when an alert decision is applied to an
+alert and changes are made to all of the alert decision fields.
+{
+"ResultId": 1234567,
+"EventType": "AlertDecisionApplied",
+"Status": "Undetermined",
+"DateCreated": "2023-04-07T19:09:58Z",
+"DateModified": "2023-04-18T19:13:46.998Z",
+"EFTId": "36ff0df7-1356-4c9a-8e8a-fbb3c5cbxxxx",
+"State": "Closed",
+"Note": 1,
+"AssignedTo": "System Administrator",
+"AssignmentType": "User",
+"DecisionTags": [
+"NeedDocuments"
+],
+"AddedToCSL": 1,
+"AddedToAcceptList": 1
+}
+
+Payload Example When a File Is Attached
+
+The following payload example shows the type of data that is sent when a file is attached to an alert.
+{
+"ResultId": 123456789,
+"EventType": "AlertDecisionApplied",
+"State": "Open",
+"Attachments": {
+"Event": "Add",
+"Files": [
+{
+"Id": 11118,
+"File": "IDPhoto.png"
+}
+]
+},
+"Note": 1
+}
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 10
+
+CONFIDENTIAL
+
+P a yl o ad Ele me nt s f o r the Alert Dec ision Applied Event
+The payload that XG sends to your receiving application for the alert decision applied event contain
+various elements.
+Some elements may not be included in the payload if no change occurred to the related field.
+Payload Elements
+Name
+
+Type
+
+Description
+
+ResultId
+
+Long
+
+EventType
+Status
+
+String
+String
+
+The ResultId element contains the system-generated number
+that identifies the alert.
+The EventType element contains the alert event type.
+The Status element contains the alert status.
+None indicates that the status has been cleared on the alert.
+
+DateCreated
+
+DateTime
+
+DateModified
+
+DateTime
+
+EFTId
+State
+
+Long
+String
+
+AttachmentIDs
+
+List<Long>
+
+Event
+
+String
+
+Note
+AssignedTo
+
+Boolean
+String
+
+AssignmentType
+
+String
+
+DecisionTags
+
+List<String>
+
+AddedtoAccept
+List
+
+Boolean
+
+The DecisionTags element contains the decision tags that were
+applied to the alert.
+1 indicates that the alert was added to an accept list.
+
+AddedtoCSL
+
+Boolean
+
+1 indicates that the alert was added to a custom screening list.
+
+BIS436-EN_US — 17 July 2023
+
+The DateCreated element contains the date (YYY-MM-DD) and
+the 24-hour local time (HH:MM:SS) that the alert was created.
+The DateModified element contains the date (YYY-MM-DD) and
+the 24-hour local time (HH:MM:SS) that the alert was modified.
+The EFTId element contains the EFT ID of the alert.
+The State element contains the alert state.
+Possible values:
+• Closed
+• Open
+• Unassigned
+The AttachmentIDs element contains the system-generated
+number that identifies the file.
+The Event element contains the type of file attachment event.
+Possible values:
+• Add
+• Delete
+1 indicates that a note was added to the alert.
+
+The AssignedTo element contains the user or role that the alert
+was assigned to.
+The AssignmentType element contains the assignment type.
+Possible values:
+• Role
+• Unknown
+Unknown indicates that the assignment has been cleared on
+the alert.
+• User
+
+Webhooks in XG 5 Page 11
+
+CONFIDENTIAL
+
+W e bho ok s Setup
+To receive real-time notifications from XG about specified events, you need to configure your receiving
+application and configure webhooks in XG.
+LexisNexis Risk Solutions does not assist with the support of the receiving application.
+For XG Enterprise, you need to configure webhooks for each client instance in Enterprise Manager. For
+XG Service, you request that LexisNexis Risk Solutions configures your client instance. In each client
+instance, you need to set up your webhooks.
+
+Configure Webhooks in Enterprise Manager
+XG Enterprise clients need to configure webhooks for their client instance in Enterprise Manager.
+For more information about configuring client instances in Enterprise Manager, see the LexisNexis®
+Bridger Insight® XG Enterprise Manager Help. XG Service clients need to request that LexisNexis Risk
+Solutions configure webhook functionality for their client instance.
+Procedure:
+
+1.
+
+Find the client instance.
+
+2.
+
+Click Product Settings.
+
+3.
+
+In the section for webhooks, select the webhook option.
+
+4.
+
+Click Save.
+
+After you complete this task:
+
+You need to set up webhooks in your client instance.
+
+Set Up Roles with the Webhooks Privileges
+You need to set up roles to grant access to view, create, or edit webhooks.
+This privilege is available only if your client instance is configured to use webhooks.
+Procedure:
+
+1.
+
+On the main menu, point to Administration, and click Roles.
+
+2.
+
+Click the role.
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 12
+
+CONFIDENTIAL
+
+3.
+
+Select Webhooks, and select an option.
+Possible options:
+• The Read Only option lets users view the webhooks. When this option is selected, the
+Administration menu displays the Webhooks option.
+• The Add, Edit option lets users create and edit the webhooks. When this option is selected,
+the Webhooks page displays the Add Webhook button, and the edit page displays the Save
+Webhook button.
+• The Add, Edit, Delete option lets users create, edit, and delete the webhooks. When this option
+is selected, the edit page displays the (Delete) icon.
+
+4.
+
+Click Save.
+If a user is signed in to XG when you add the webhooks privilege to their role, then the user
+may need to sign out and sign in again before they can see the Webhooks option in the
+Administration menu.
+
+Add a Webhook
+You need the payload URL and the secret from the receiving application to add a webhook.
+Procedure:
+
+1.
+
+On the main menu, point to Administration, and click Webhooks.
+
+2.
+
+Click Add Webhook.
+
+3.
+
+Enter a unique name.
+
+4.
+
+Select the webhook event.
+Possible options:
+• The Alert State Closed event sends a payload when an alert state is closed.
+• The Alert Decision Applied event sends a payload when an alert decision is applied, a file is
+attached to the alert, or a file is deleted from an alert.
+
+5.
+
+Enter the payload URL.
+
+6.
+
+Enter the secret from the receiving application.
+
+7.
+
+To activate the webhook, select Active.
+
+8.
+
+Click Save Webhook.
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 13
+
+CONFIDENTIAL
+
+Edit a Webhook
+You can change the webhook information, the active state, or the secret.
+Procedure:
+
+1.
+
+On the main menu, point to Administration, and click Webhooks.
+
+2.
+
+Click the webhook that you want to edit.
+
+3.
+
+Edit the webhook information.
+
+4.
+
+To change the active state, select or clear Active.
+
+5.
+
+To change the secret, click Change Secret, and enter the secret.
+
+6.
+
+Click Save Webhook.
+
+Delete a Webhook
+You can delete a webhook that is no longer applicable to your review processes.
+Procedure:
+
+1.
+
+On the main menu, point to Administration, and click Webhooks.
+
+2.
+
+Click the webhook that you want to delete.
+
+3.
+
+Click
+
+(Delete), and click Yes.
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 14
+
+CONFIDENTIAL
+
+P ay l o ad Va lidation
+The payload contains callback headers that can be used to validate that the payload has been sent from
+XG and has not been tampered with.
+The following headers are included in the payload:
+• The x-ms-date header contains the UTC (coordinated universal time) timestamp of the date and time
+when the payload was sent.
+For example, Thu, 15 Jun 2023 22:30:59 GMT.
+• The x-ms-content-sha256 header contains the payload content, base64 encoded and hashed using
+sha256.
+For example, cPYE02RM5qLuC1uIPPIhs8iZ0XA6U0QSUMPSsz2PnTQ=.
+• The Authorization header contains a string with a signature.
+For example, HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-contentsha256&Signature=IDw6Wik8WQ4068vRfCNaRhAhUJfQtthA67XgrcIhYTI=.
+
+Verify a Payload
+You can verify the authenticity and integrity of a payload by examining the payload's content and
+headers.
+Procedure:
+
+1.
+
+To verify that the payload was not tampered with, complete the following steps:
+a. Create a sha256 hash and base-64 encoding of the JSON content from the payload.
+b. Compare the resulting content to the x-ms-content-sha256 header from the payload.
+The hashed, encoded content should match the x-ms-content-sha256 header.
+
+2.
+
+Create the StringThatIsSigned string by completing the following steps:
+StringThatIsSigned = $"POST\n{requestUri.PathAndQuery}\n{date};{host};{contentHash}"
+a. Replace {requestUri.PathAndQuery} with the URL path and query information (if the query
+information is included in the URL).
+For example, if the URL is “https://127.0.0.1:9903/TestEndpoint”, then you use /TestEndpoint.
+b. Replace {date} with the date from the x-ms-date header.
+For example, Thu, 15 Jun 2023 22:30:59 GMT.
+c. Replace {host} with the host name and port number or the Url.Authority property in the URL.
+For example, if the URL is “https://127.0.0.1:9903/TestEndpoint”, then you use
+127.0.0.1:9903.
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 15
+
+CONFIDENTIAL
+
+d. Replace {contentHash} with the information from the x-ms-content-sha256 header.
+For example, cPYE02RM5qLuC1uIPPIhs8iZ0XA6U0QSUMPSsz2PnTQ=.
+3.
+
+Create a HMAC256 hash using the webhook secret.
+
+4.
+
+Use the HMAC256 hash to hash the StringThatIsSigned string.
+
+Result:
+
+The hashed string should match the signature from the Authorization header of the payload. If the string
+matches the signature, then the payload was sent by XG.
+
+BIS436-EN_US — 17 July 2023
+
+Webhooks in XG 5 Page 16
+
+
