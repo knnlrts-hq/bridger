@@ -100,6 +100,723 @@ LexisNexis Bridger Insight XG5 sends webhooks when compliance officers make deci
 | **EBICS Banks** | Statement availability, pain.002 | Faster reconciliation |
 | **FX Providers** | Rate locks, trade confirmations | Treasury automation |
 
+### 3.3 Column Banking Platform Webhooks
+
+Column is a nationally chartered platform bank built for developers, offering direct Federal Reserve connections and comprehensive banking APIs for ACH, Wire, SWIFT, Real-time payments (RTP/FedNow), and book transfers. This use case details the integration of Column webhooks into Bank Connector to enable real-time payment status updates, account notifications, and compliance event handling.
+
+#### 3.3.1 Business Context
+
+Column provides a modern banking-as-a-service platform that enables:
+
+- **Direct Federal Reserve access**: Fastest possible ACH and wire transfers
+- **24/7 instant book transfers**: Real-time internal transfers between Column accounts
+- **Real-time payments**: FedNow and RTP network access settling in under a second
+- **International payments**: Direct SWIFT network integration
+- **Programmable accounts**: Full API control over bank accounts and entities
+
+**Integration Value for Bank Connector:**
+
+| Capability | Current State | With Column Webhooks |
+|------------|---------------|----------------------|
+| ACH Status | Poll every 15 minutes | Real-time within seconds |
+| Wire Confirmation | Manual reconciliation | Instant notification |
+| SWIFT Updates | Batch processing | Real-time status tracking |
+| Book Transfers | Synchronous only | Async with hold management |
+| Compliance | Separate workflow | Integrated identity events |
+
+#### 3.3.2 Column Webhook Event Categories
+
+Column provides comprehensive webhook coverage across all payment rails and account operations:
+
+##### Payment Transfer Events
+
+| Event Category | Event Type | Description | Webhook |
+|----------------|------------|-------------|---------|
+| **ACH Outgoing** | `ach.outgoing_transfer.initiated` | Transfer request received | Yes |
+| | `ach.outgoing_transfer.manual_review` | Under Column team review | Yes |
+| | `ach.outgoing_transfer.submitted` | Submitted to Federal Reserve | Yes |
+| | `ach.outgoing_transfer.settled` | Settled at receiving bank (RDFI) | Yes |
+| | `ach.outgoing_transfer.completed` | Return window passed | Yes |
+| | `ach.outgoing_transfer.returned` | Returned by RDFI | Yes |
+| | `ach.outgoing_transfer.noc` | Notification of Change received | Yes |
+| **ACH Incoming** | `ach.incoming_transfer.completed` | Return window passed | Yes |
+| | `ach.incoming_transfer.returned` | Returned by Column | Yes |
+| | `ach.incoming_transfer.return_dishonored` | Return dishonored by ODFI | Yes |
+| | `ach.incoming_transfer.return_contested` | Dishonored return contested | Yes |
+| **Wire Outgoing** | `wire.outgoing_transfer.initiated` | Wire request received | Yes |
+| | `wire.outgoing_transfer.manual_review` | Under Column team review | Yes |
+| | `wire.outgoing_transfer.submitted` | Submitted to Federal Reserve | Yes |
+| | `wire.outgoing_transfer.rejected` | Rejected by Column or Fed | Yes |
+| | `wire.outgoing_transfer.completed` | Fed acknowledgment received | Yes |
+| **Wire Incoming** | `wire.incoming_transfer.completed` | Incoming wire processed | Yes |
+| **SWIFT Outgoing** | `swift.outgoing_transfer.initiated` | SWIFT request received | Yes |
+| | `swift.outgoing_transfer.manual_review` | Under Column review | Yes |
+| | `swift.outgoing_transfer.submitted` | Submitted to SWIFT network | Yes |
+| | `swift.outgoing_transfer.completed` | Settled to beneficiary bank | Yes |
+| | `swift.outgoing_transfer.pending_return` | Return confirmation received | Yes |
+| | `swift.outgoing_transfer.returned` | Returned/rejected | Yes |
+| **Book Transfer** | `book.transfer.completed` | Internal transfer completed | Yes |
+| | `book.transfer.hold_created` | Transfer with hold created | Yes |
+| | `book.transfer.updated` | Held transfer updated | Yes |
+| | `book.transfer.canceled` | Held transfer canceled | Yes |
+| **Real-time** | `realtime.outgoing_transfer.initiated` | RTP/FedNow initiated | Yes |
+| | `realtime.outgoing_transfer.completed` | Settled (sub-second) | Yes |
+| | `realtime.outgoing_transfer.rejected` | Rejected by network | Yes |
+| | `realtime.incoming_transfer.completed` | Incoming RTP received | Yes |
+
+##### Account and Entity Events
+
+| Event Category | Event Type | Description |
+|----------------|------------|-------------|
+| **Account** | `account.overdrafted` | Account overdrawn, reserve locked |
+| | `account.overdraft_cleared` | Overdraft cleared, reserve released |
+| **Identity** | `identity.created` | Entity created, pending verification |
+| | `identity.verification.pending` | Verification submitted |
+| | `identity.verification.manual_review` | Under manual review |
+| | `identity.verification.verified` | Identity verified successfully |
+| | `identity.verification.denied` | Verification failed |
+| **Loan** | `loan.created` | Loan created |
+| | `loan.updated` | Loan updated |
+| | `loan.in_dispute` | Loan marked in dispute |
+| | `loan.delinquent` | Loan marked delinquent |
+| | `loan.payment.completed` | Loan payment completed |
+| **Reporting** | `reporting.bank_account_summary.completed` | Account summary ready |
+| | `reporting.bank_account_transaction.completed` | Transaction report ready |
+
+#### 3.3.3 Example Integration Flow
+
+**Scenario: ACH Payment with Real-time Status Updates**
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│               COLUMN ACH PAYMENT WEBHOOK INTEGRATION FLOW                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. Payment Initiation                                                       │
+│  ═══════════════════                                                         │
+│                                                                              │
+│  Trax                    Bank Connector              Column API              │
+│    │                           │                          │                  │
+│    │── Create ACH Payment ────►│                          │                  │
+│    │                           │── POST /transfers/ach ──►│                  │
+│    │                           │◄── 201 {id, status} ─────│                  │
+│    │◄── PENDING ───────────────│                          │                  │
+│                                                                              │
+│  2. Real-time Status Updates via Webhooks                                    │
+│  ════════════════════════════════════════                                    │
+│                                                                              │
+│  Column                  Bank Connector              Trax                    │
+│    │                           │                       │                     │
+│    │── ach.outgoing_transfer  ─►│                      │                     │
+│    │   .submitted              │── Validate signature  │                     │
+│    │                           │── Update payment ────►│                     │
+│    │                           │   status: SUBMITTED   │                     │
+│    │◄── 200 OK ────────────────│                       │                     │
+│    │                           │                       │                     │
+│    │── ach.outgoing_transfer  ─►│                      │                     │
+│    │   .settled                │── Validate signature  │                     │
+│    │                           │── Update payment ────►│                     │
+│    │                           │   status: SETTLED     │                     │
+│    │◄── 200 OK ────────────────│                       │                     │
+│    │                           │                       │                     │
+│    │── ach.outgoing_transfer  ─►│                      │                     │
+│    │   .completed              │── Validate signature  │                     │
+│    │                           │── Update payment ────►│                     │
+│    │                           │   status: COMPLETED   │                     │
+│    │◄── 200 OK ────────────────│                       │                     │
+│                                                                              │
+│  3. Exception Handling (Return Scenario)                                     │
+│  ═══════════════════════════════════════                                     │
+│                                                                              │
+│  Column                  Bank Connector              Trax                    │
+│    │                           │                       │                     │
+│    │── ach.outgoing_transfer  ─►│                      │                     │
+│    │   .returned               │── Validate signature  │                     │
+│    │   {return_code: "R01"}    │── Update payment ────►│                     │
+│    │                           │   status: RETURNED    │                     │
+│    │                           │   reason: "R01"       │                     │
+│    │◄── 200 OK ────────────────│                       │                     │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Scenario: SWIFT International Transfer**
+
+```
+1. Trax initiates international payment → Bank Connector → Column API
+2. Column sends swift.outgoing_transfer.initiated webhook
+3. Bank Connector validates, updates Trax: status = SWIFT_INITIATED
+4. Column sends swift.outgoing_transfer.submitted webhook
+5. Bank Connector updates Trax: status = SWIFT_SUBMITTED
+6. Column sends swift.outgoing_transfer.completed webhook
+7. Bank Connector updates Trax: status = SWIFT_COMPLETED
+   (Or swift.outgoing_transfer.returned if rejected by correspondent bank)
+```
+
+#### 3.3.4 Column Signature Validation
+
+Column uses HMAC-SHA256 to sign webhook payloads with a unique secret per endpoint:
+
+**Signature Details:**
+
+| Aspect | Value |
+|--------|-------|
+| Algorithm | HMAC-SHA256 |
+| Header | `Column-Signature` |
+| Secret Source | Dashboard → Webhook settings (unique per endpoint) |
+| Input | Raw JSON payload (unmodified) |
+
+**Validation Implementation:**
+
+```java
+@Component
+public class ColumnSignatureValidator implements WebhookSignatureValidator {
+
+    private final String webhookSecret;
+
+    public ColumnSignatureValidator(
+            @Value("${webhooks.providers.column.webhookSecret}") String secret) {
+        this.webhookSecret = secret;
+    }
+
+    @Override
+    public ValidationResult validate(WebhookRequest request) {
+        try {
+            // Step 1: Get signature from header
+            String providedSignature = request.getHeader("Column-Signature");
+            if (providedSignature == null || providedSignature.isEmpty()) {
+                return ValidationResult.failure(
+                    "MISSING_SIGNATURE",
+                    "Column-Signature header is missing"
+                );
+            }
+
+            // Step 2: Compute expected signature using raw payload
+            // CRITICAL: Use raw payload without any modification
+            String rawPayload = request.getRawBody();
+            String expectedSignature = computeHmacSha256(webhookSecret, rawPayload);
+
+            // Step 3: Compare signatures using constant-time comparison
+            if (!constantTimeEquals(expectedSignature, providedSignature)) {
+                return ValidationResult.failure(
+                    "SIGNATURE_MISMATCH",
+                    "Column-Signature validation failed"
+                );
+            }
+
+            return ValidationResult.success();
+
+        } catch (Exception e) {
+            return ValidationResult.failure(
+                "VALIDATION_ERROR",
+                "Error during signature validation: " + e.getMessage()
+            );
+        }
+    }
+
+    private String computeHmacSha256(String secret, String message) {
+        Mac hmac = Mac.getInstance("HmacSHA256");
+        SecretKeySpec keySpec = new SecretKeySpec(
+            secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"
+        );
+        hmac.init(keySpec);
+        byte[] hash = hmac.doFinal(message.getBytes(StandardCharsets.UTF_8));
+        return Hex.encodeHexString(hash);  // Or Base64 depending on Column's format
+    }
+
+    @Override
+    public String getProviderName() {
+        return "column";
+    }
+}
+```
+
+**Important Considerations:**
+
+1. **Raw Payload Requirement**: Column requires the exact raw payload bytes for signature calculation. Any prettifying, deserializing/serializing, or whitespace changes will cause validation failures.
+
+2. **Per-Endpoint Secrets**: Each webhook endpoint configured in Column Dashboard receives a unique secret. Store and manage these securely.
+
+3. **Response Time**: Column expects a 2XX response within **10 seconds** or will consider the delivery failed.
+
+#### 3.3.5 Column Retry Policy
+
+Column has a robust retry mechanism for failed webhook deliveries:
+
+| Parameter | Value |
+|-----------|-------|
+| Max Retries | 25 attempts |
+| Retry Window | 3 days |
+| Backoff Strategy | Exponential |
+| First Retry | 1 minute after failure |
+| Success Criteria | 2XX HTTP response within 10 seconds |
+
+**Best Practice Response Pattern:**
+
+```java
+@Component
+public class ColumnWebhookHandler {
+
+    public Mono<ServerResponse> handle(ServerRequest request) {
+        return request.bodyToMono(String.class)
+            .flatMap(body -> {
+                // 1. Validate signature immediately
+                ValidationResult validation = signatureValidator.validate(
+                    WebhookRequest.from(request, body)
+                );
+
+                if (!validation.valid()) {
+                    return ServerResponse.status(401)
+                        .bodyValue(Map.of("error", validation.errorCode()));
+                }
+
+                // 2. Parse event to extract ID for idempotency
+                ColumnWebhookEvent event = parseEvent(body);
+
+                // 3. Check idempotency (Column may send same event multiple times)
+                if (idempotencyStore.isDuplicate(event.getId())) {
+                    return ServerResponse.ok().build();  // ACK duplicate
+                }
+
+                // 4. Return 200 OK IMMEDIATELY before processing
+                // This prevents timeout and unnecessary retries
+                // Process asynchronously
+                processEventAsync(event, body);
+
+                return ServerResponse.ok().build();
+            });
+    }
+
+    @Async
+    private void processEventAsync(ColumnWebhookEvent event, String rawPayload) {
+        try {
+            // Actual business logic processing
+            dispatchEvent(event);
+            idempotencyStore.markProcessed(event.getId());
+            auditLogger.logSuccess(event);
+        } catch (Exception e) {
+            // Log error but don't affect webhook response
+            auditLogger.logProcessingError(event, e);
+            deadLetterQueue.store(event, rawPayload, e);
+        }
+    }
+}
+```
+
+#### 3.3.6 Column Event Handler Implementation
+
+```java
+@Component
+public class ColumnEventHandler implements WebhookEventHandler {
+
+    private final PaymentStateUpdater stateUpdater;
+    private final AccountEventProcessor accountProcessor;
+    private final ComplianceEventProcessor complianceProcessor;
+    private final WebhookAuditLogger auditLogger;
+
+    public void handleEvent(ColumnWebhookEvent event) {
+        String eventType = event.getType();
+
+        // Route by event category
+        if (eventType.startsWith("ach.")) {
+            handleAchEvent(event);
+        } else if (eventType.startsWith("wire.")) {
+            handleWireEvent(event);
+        } else if (eventType.startsWith("swift.")) {
+            handleSwiftEvent(event);
+        } else if (eventType.startsWith("book.")) {
+            handleBookTransferEvent(event);
+        } else if (eventType.startsWith("realtime.")) {
+            handleRealtimeEvent(event);
+        } else if (eventType.startsWith("account.")) {
+            handleAccountEvent(event);
+        } else if (eventType.startsWith("identity.")) {
+            handleIdentityEvent(event);
+        } else if (eventType.startsWith("loan.")) {
+            handleLoanEvent(event);
+        } else {
+            log.warn("Unhandled Column event type: {}", eventType);
+        }
+    }
+
+    private void handleAchEvent(ColumnWebhookEvent event) {
+        String transferId = event.getData().get("id").toString();
+        String paymentRef = lookupPaymentByColumnTransferId(transferId);
+
+        if (paymentRef == null) {
+            log.warn("No payment found for Column transfer: {}", transferId);
+            return;
+        }
+
+        String traxStatus = mapColumnAchStatusToTrax(event.getType(), event.getData());
+
+        stateUpdater.updatePaymentStatus(
+            paymentRef,
+            traxStatus,
+            buildAuditDetails(event)
+        );
+    }
+
+    private String mapColumnAchStatusToTrax(String eventType, Map<String, Object> data) {
+        return switch (eventType) {
+            case "ach.outgoing_transfer.initiated" -> "ACH_INITIATED";
+            case "ach.outgoing_transfer.manual_review" -> "ACH_MANUAL_REVIEW";
+            case "ach.outgoing_transfer.submitted" -> "ACH_SUBMITTED";
+            case "ach.outgoing_transfer.settled" -> "ACH_SETTLED";
+            case "ach.outgoing_transfer.completed" -> "ACH_COMPLETED";
+            case "ach.outgoing_transfer.returned" -> {
+                String returnCode = extractReturnCode(data);
+                yield "ACH_RETURNED_" + returnCode;
+            }
+            case "ach.outgoing_transfer.noc" -> "ACH_NOC_RECEIVED";
+            case "ach.incoming_transfer.completed" -> "ACH_INCOMING_COMPLETED";
+            default -> {
+                log.warn("Unmapped ACH event type: {}", eventType);
+                yield "ACH_UNKNOWN";
+            }
+        };
+    }
+
+    private void handleSwiftEvent(ColumnWebhookEvent event) {
+        String transferId = event.getData().get("id").toString();
+        String paymentRef = lookupPaymentByColumnTransferId(transferId);
+
+        String traxStatus = switch (event.getType()) {
+            case "swift.outgoing_transfer.initiated" -> "SWIFT_INITIATED";
+            case "swift.outgoing_transfer.manual_review" -> "SWIFT_MANUAL_REVIEW";
+            case "swift.outgoing_transfer.submitted" -> "SWIFT_SUBMITTED";
+            case "swift.outgoing_transfer.completed" -> "SWIFT_COMPLETED";
+            case "swift.outgoing_transfer.pending_return" -> "SWIFT_PENDING_RETURN";
+            case "swift.outgoing_transfer.returned" -> "SWIFT_RETURNED";
+            default -> "SWIFT_UNKNOWN";
+        };
+
+        stateUpdater.updatePaymentStatus(paymentRef, traxStatus, buildAuditDetails(event));
+    }
+
+    private void handleAccountEvent(ColumnWebhookEvent event) {
+        // Handle overdraft alerts - critical for treasury management
+        if ("account.overdrafted".equals(event.getType())) {
+            String accountId = event.getData().get("bank_account_id").toString();
+            BigDecimal overdraftAmount = new BigDecimal(
+                event.getData().get("overdraft_amount").toString()
+            );
+
+            accountProcessor.handleOverdraft(accountId, overdraftAmount, event);
+            // Trigger alert to treasury team
+            alertService.sendOverdraftAlert(accountId, overdraftAmount);
+        }
+    }
+
+    private void handleIdentityEvent(ColumnWebhookEvent event) {
+        // Handle KYC/identity verification events for compliance
+        String entityId = event.getData().get("entity_id").toString();
+
+        switch (event.getType()) {
+            case "identity.verification.verified" ->
+                complianceProcessor.markEntityVerified(entityId, event);
+            case "identity.verification.denied" ->
+                complianceProcessor.markEntityDenied(entityId, event);
+            case "identity.verification.manual_review" ->
+                complianceProcessor.flagForManualReview(entityId, event);
+        }
+    }
+}
+```
+
+#### 3.3.7 Column Status Mapping
+
+##### ACH Transfer Status Mapping
+
+| Column Event | Trax Status | Payment Action |
+|--------------|-------------|----------------|
+| `ach.outgoing_transfer.initiated` | `ACH_INITIATED` | Payment in progress |
+| `ach.outgoing_transfer.manual_review` | `ACH_MANUAL_REVIEW` | Await Column review |
+| `ach.outgoing_transfer.submitted` | `ACH_SUBMITTED` | Sent to Federal Reserve |
+| `ach.outgoing_transfer.settled` | `ACH_SETTLED` | Funds settled at RDFI |
+| `ach.outgoing_transfer.completed` | `ACH_COMPLETED` | Final - return window closed |
+| `ach.outgoing_transfer.returned` | `ACH_RETURNED` | Handle return, notify user |
+| `ach.outgoing_transfer.noc` | `ACH_NOC_RECEIVED` | Update account details |
+
+##### Wire Transfer Status Mapping
+
+| Column Event | Trax Status | Payment Action |
+|--------------|-------------|----------------|
+| `wire.outgoing_transfer.initiated` | `WIRE_INITIATED` | Payment in progress |
+| `wire.outgoing_transfer.manual_review` | `WIRE_MANUAL_REVIEW` | Await Column review |
+| `wire.outgoing_transfer.submitted` | `WIRE_SUBMITTED` | Sent to FedWire |
+| `wire.outgoing_transfer.completed` | `WIRE_COMPLETED` | Final - wire delivered |
+| `wire.outgoing_transfer.rejected` | `WIRE_REJECTED` | Handle rejection |
+| `wire.incoming_transfer.completed` | `WIRE_INCOMING_RECEIVED` | Credit account |
+
+##### SWIFT Transfer Status Mapping
+
+| Column Event | Trax Status | Payment Action |
+|--------------|-------------|----------------|
+| `swift.outgoing_transfer.initiated` | `SWIFT_INITIATED` | Payment in progress |
+| `swift.outgoing_transfer.manual_review` | `SWIFT_MANUAL_REVIEW` | Await Column review |
+| `swift.outgoing_transfer.submitted` | `SWIFT_SUBMITTED` | Sent to SWIFT network |
+| `swift.outgoing_transfer.completed` | `SWIFT_COMPLETED` | Delivered to beneficiary bank |
+| `swift.outgoing_transfer.pending_return` | `SWIFT_PENDING_RETURN` | Return incoming |
+| `swift.outgoing_transfer.returned` | `SWIFT_RETURNED` | Handle return/rejection |
+
+#### 3.3.8 Column Webhook Payload Examples
+
+**ACH Outgoing Transfer Completed:**
+
+```json
+{
+  "id": "evnt_2abc3def4ghi5jkl",
+  "type": "ach.outgoing_transfer.completed",
+  "created_at": "2026-01-15T14:30:00.000Z",
+  "data": {
+    "id": "acht_1abc2def3ghi4jkl",
+    "amount": 150000,
+    "currency_code": "USD",
+    "type": "credit",
+    "status": "completed",
+    "description": "Vendor payment",
+    "entry_class_code": "CCD",
+    "bank_account_id": "bacc_abc123def456",
+    "counterparty_id": "cprt_xyz789abc012",
+    "created_at": "2026-01-14T10:00:00.000Z",
+    "updated_at": "2026-01-15T14:30:00.000Z",
+    "effective_date": "2026-01-15",
+    "settlement_date": "2026-01-15"
+  }
+}
+```
+
+**ACH Transfer Returned:**
+
+```json
+{
+  "id": "evnt_3def4ghi5jkl6mno",
+  "type": "ach.outgoing_transfer.returned",
+  "created_at": "2026-01-16T09:15:00.000Z",
+  "data": {
+    "id": "acht_2def3ghi4jkl5mno",
+    "amount": 50000,
+    "currency_code": "USD",
+    "type": "credit",
+    "status": "returned",
+    "bank_account_id": "bacc_abc123def456",
+    "return_details": {
+      "return_code": "R01",
+      "return_reason": "Insufficient Funds",
+      "returned_at": "2026-01-16T09:15:00.000Z"
+    }
+  }
+}
+```
+
+**SWIFT Transfer Completed:**
+
+```json
+{
+  "id": "evnt_4ghi5jkl6mno7pqr",
+  "type": "swift.outgoing_transfer.completed",
+  "created_at": "2026-01-15T16:45:00.000Z",
+  "data": {
+    "id": "swft_3ghi4jkl5mno6pqr",
+    "amount": 25000000,
+    "currency_code": "EUR",
+    "status": "completed",
+    "bank_account_id": "bacc_abc123def456",
+    "beneficiary_name": "Acme GmbH",
+    "beneficiary_bank_bic": "DEUTDEFF",
+    "beneficiary_account_number": "DE89370400440532013000",
+    "reference": "INV-2026-00123",
+    "created_at": "2026-01-15T10:00:00.000Z",
+    "updated_at": "2026-01-15T16:45:00.000Z"
+  }
+}
+```
+
+**Account Overdraft Alert:**
+
+```json
+{
+  "id": "evnt_5jkl6mno7pqr8stu",
+  "type": "account.overdrafted",
+  "created_at": "2026-01-15T11:30:00.000Z",
+  "data": {
+    "bank_account_id": "bacc_xyz789abc012",
+    "platform_id": "plat_main123",
+    "overdraft_amount": 500000,
+    "available_balance": -500000,
+    "reserve_account_id": "bacc_reserve456",
+    "locked_reserve_amount": 500000
+  }
+}
+```
+
+#### 3.3.9 Column Provider Configuration
+
+```yaml
+# column-webhook-config.yml
+webhooks:
+  providers:
+    column:
+      enabled: true
+      path: /api/webhooks/column
+
+      security:
+        signatureType: HMAC_SHA256
+        signatureHeader: Column-Signature
+        webhookSecret: ${COLUMN_WEBHOOK_SECRET}
+        # Column doesn't publish IP ranges for allowlisting
+        # Use signature validation as primary security
+
+      eventHandling:
+        # Use wildcard to receive all events
+        subscribedEvents:
+          - "*"  # All events
+          # Or be selective:
+          # - "ach.*"
+          # - "wire.*"
+          # - "swift.*"
+          # - "account.overdrafted"
+          # - "identity.verification.*"
+
+        # Event type to Trax status mapping
+        achStatusMapping:
+          "ach.outgoing_transfer.initiated": ACH_INITIATED
+          "ach.outgoing_transfer.manual_review": ACH_MANUAL_REVIEW
+          "ach.outgoing_transfer.submitted": ACH_SUBMITTED
+          "ach.outgoing_transfer.settled": ACH_SETTLED
+          "ach.outgoing_transfer.completed": ACH_COMPLETED
+          "ach.outgoing_transfer.returned": ACH_RETURNED
+
+        wireStatusMapping:
+          "wire.outgoing_transfer.initiated": WIRE_INITIATED
+          "wire.outgoing_transfer.submitted": WIRE_SUBMITTED
+          "wire.outgoing_transfer.completed": WIRE_COMPLETED
+          "wire.outgoing_transfer.rejected": WIRE_REJECTED
+
+        swiftStatusMapping:
+          "swift.outgoing_transfer.initiated": SWIFT_INITIATED
+          "swift.outgoing_transfer.submitted": SWIFT_SUBMITTED
+          "swift.outgoing_transfer.completed": SWIFT_COMPLETED
+          "swift.outgoing_transfer.returned": SWIFT_RETURNED
+
+      responseHandling:
+        # Return 200 immediately, process async
+        asyncProcessing: true
+        responseTimeoutMs: 5000  # Well under Column's 10s limit
+
+      idempotency:
+        keyField: "id"  # Column event ID
+        ttlHours: 72    # Cover Column's 3-day retry window
+
+      traxIntegration:
+        updatePaymentStatus: true
+        createAuditLog: true
+        notifyTreasury: true  # For overdraft alerts
+        notifyCompliance: true  # For identity events
+
+      alerts:
+        onOverdraft: true
+        onSwiftReturn: true
+        onManualReview: true
+```
+
+#### 3.3.10 Column Plugin Implementation
+
+```java
+@Component
+public class ColumnWebhookPlugin implements WebhookProviderPlugin {
+
+    private final ColumnSignatureValidator signatureValidator;
+    private final ColumnEventProcessor eventProcessor;
+    private final ColumnEventHandler eventHandler;
+    private final ColumnWebhookConfig config;
+
+    @Override
+    public String getProviderId() {
+        return "column";
+    }
+
+    @Override
+    public String getProviderName() {
+        return "Column Banking Platform";
+    }
+
+    @Override
+    public WebhookSignatureValidator getSignatureValidator() {
+        return signatureValidator;
+    }
+
+    @Override
+    public WebhookEventProcessor<?> getEventProcessor() {
+        return eventProcessor;
+    }
+
+    @Override
+    public WebhookEventHandler getEventHandler() {
+        return eventHandler;
+    }
+
+    @Override
+    public ConfigurationSchema getConfigurationSchema() {
+        return ConfigurationSchema.builder()
+            .requiredString("webhookSecret", "Column webhook signing secret")
+            .requiredString("platformId", "Column platform identifier")
+            .optionalBoolean("asyncProcessing", true, "Process events asynchronously")
+            .optionalStringArray("subscribedEvents", List.of("*"), "Events to subscribe to")
+            .optionalBoolean("notifyTreasury", true, "Alert on overdraft events")
+            .optionalBoolean("notifyCompliance", true, "Alert on identity events")
+            .build();
+    }
+}
+```
+
+#### 3.3.11 Key Implementation Considerations
+
+**1. Event Ordering**
+
+Column explicitly states that events may not be delivered in order. Bank Connector must:
+- Not assume sequential delivery
+- Handle events based on their `created_at` timestamp
+- Use the transfer object's `status` field as the source of truth
+- Implement proper state machine transitions that handle out-of-order events
+
+**2. Idempotency Requirements**
+
+Column may deliver the same event multiple times. Implementation must:
+- Store processed event IDs for at least 72 hours (covering 3-day retry window)
+- Use Column's event `id` field as the idempotency key
+- Return 200 OK for duplicate events without reprocessing
+
+**3. Response Time Constraints**
+
+Column requires 2XX response within 10 seconds:
+- Validate signature immediately
+- Return 200 OK before any business logic processing
+- Process events asynchronously
+- Use dead letter queue for failed async processing
+
+**4. ACH Return Code Handling**
+
+ACH returns include standardized return codes that require specific handling:
+
+| Return Code | Meaning | Action |
+|-------------|---------|--------|
+| R01 | Insufficient Funds | Retry or notify payer |
+| R02 | Account Closed | Update counterparty, notify payer |
+| R03 | No Account/Unable to Locate | Verify account details |
+| R04 | Invalid Account Number | Update counterparty details |
+| R10 | Customer Advises Not Authorized | Dispute handling |
+| R29 | Corporate Customer Advises Not Authorized | Dispute handling |
+
+**5. Manual Review Events**
+
+When Column places a transfer in manual review:
+- Do not update payment to a failed state
+- Set status to indicate pending review
+- Column team will either approve (next event) or reject
+- May take up to 24-48 hours during business days
+
 ---
 
 ## 4. Architecture
@@ -113,10 +830,10 @@ LexisNexis Bridger Insight XG5 sends webhooks when compliance officers make deci
 │                                                                              │
 │                           EXTERNAL PROVIDERS                                 │
 │                                                                              │
-│    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐            │
-│    │ Bridger  │    │  SWIFT   │    │ Dow Jones│    │  Banks   │            │
-│    │   XG5    │    │   gpi    │    │   Risk   │    │          │            │
-│    └────┬─────┘    └────┬─────┘    └────┬─────┘    └────┬─────┘            │
+│    ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│    │ Bridger  │  │  Column  │  │  SWIFT   │  │ Dow Jones│  │  Banks   │  │
+│    │   XG5    │  │  Bank    │  │   gpi    │  │   Risk   │  │          │  │
+│    └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  │
 │         │               │               │               │                   │
 │         └───────────────┴───────────────┴───────────────┘                   │
 │                                   │                                          │
@@ -137,6 +854,7 @@ LexisNexis Bridger Insight XG5 sends webhooks when compliance officers make deci
 │  │  ┌──────────────────────────────────────────────────────────────┐  │   │
 │  │  │                    PROVIDER ROUTER                            │  │   │
 │  │  │  /api/webhooks/bridger    → BridgerWebhookHandler            │  │   │
+│  │  │  /api/webhooks/column     → ColumnWebhookHandler             │  │   │
 │  │  │  /api/webhooks/swift-gpi  → SwiftGpiWebhookHandler           │  │   │
 │  │  │  /api/webhooks/dow-jones  → DowJonesWebhookHandler           │  │   │
 │  │  │  /api/webhooks/{provider} → DynamicProviderHandler           │  │   │
@@ -220,11 +938,13 @@ public class WebhookRouterConfig {
     @Bean
     public RouterFunction<ServerResponse> webhookRouter(
             BridgerWebhookHandler bridgerHandler,
+            ColumnWebhookHandler columnHandler,
             SwiftGpiWebhookHandler swiftHandler,
             GenericWebhookHandler genericHandler) {
 
         return RouterFunctions
             .route(POST("/api/webhooks/bridger"), bridgerHandler::handle)
+            .andRoute(POST("/api/webhooks/column"), columnHandler::handle)
             .andRoute(POST("/api/webhooks/swift-gpi"), swiftHandler::handle)
             .andRoute(POST("/api/webhooks/{provider}"), genericHandler::handle);
     }
@@ -1463,3 +2183,4 @@ Eventually extract webhooks into a dedicated microservice:
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-13 | Claude | Initial design document |
+| 1.1 | 2026-01-16 | Claude | Added comprehensive Column Banking Platform webhook use case (Section 3.3) |
