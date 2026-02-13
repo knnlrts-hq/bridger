@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compliance Dashboard - Bridger POC</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #1a56db;
+    --primary-light: #e1effe;
+    --success: #059669;
+    --success-light: #d1fae5;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* --- Top Nav --- */
+  .top-nav {
+    background: var(--text);
+    color: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .top-nav .brand {
+    font-size: 18px;
+    font-weight: 700;
+    margin-right: 40px;
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+  }
+
+  .top-nav .brand span {
+    color: #93c5fd;
+  }
+
+  .top-nav nav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .top-nav nav a {
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .top-nav nav a:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+  }
+
+  .top-nav nav a.active {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  /* --- Layout --- */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+  }
+
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+
+  /* --- Stats Bar --- */
+  .stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .stat-item .stat-num {
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .stat-item .stat-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 32px;
+    background: var(--border);
+  }
+
+  .stat-pending .stat-num { color: var(--warning); }
+  .stat-resolved .stat-num { color: var(--success); }
+  .stat-total .stat-num { color: var(--primary); }
+
+  /* --- Buttons --- */
+  .btn {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #1e40af; }
+
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #047857; }
+
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+
+  .btn-warning { background: var(--warning); color: #fff; }
+  .btn-warning:hover { background: #b45309; }
+
+  .btn-outline { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { background: #f1f5f9; }
+
+  .btn-sm {
+    font-size: 12px;
+    padding: 5px 14px;
+    border-radius: 6px;
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* --- Card --- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .card-badge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .badge-blue { background: var(--primary-light); color: var(--primary); }
+  .badge-green { background: var(--success-light); color: var(--success); }
+  .badge-amber { background: var(--warning-light); color: var(--warning); }
+  .badge-red { background: var(--danger-light); color: var(--danger); }
+
+  /* --- Pill --- */
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .pill-pending { background: var(--warning-light); color: var(--warning); }
+  .pill-accepted { background: var(--success-light); color: var(--success); }
+  .pill-rejected { background: var(--danger-light); color: var(--danger); }
+  .pill-escalated { background: var(--warning-light); color: var(--warning); border: 1px solid var(--warning); }
+
+  /* --- Alerts Table --- */
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .alert-row {
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .alert-row:hover {
+    background: #f1f5f9;
+  }
+
+  .alert-row.expanded {
+    background: #f1f5f9;
+  }
+
+  .alert-row td:first-child {
+    border-left: 4px solid transparent;
+    padding-left: 8px;
+  }
+
+  .alert-row.score-high td:first-child { border-left-color: var(--danger); }
+  .alert-row.score-medium td:first-child { border-left-color: var(--warning); }
+  .alert-row.score-low td:first-child { border-left-color: var(--success); }
+
+  .score-cell {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .score-high { color: var(--danger); }
+  .score-medium { color: var(--warning); }
+  .score-low { color: var(--success); }
+
+  .alert-id-cell {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    color: var(--primary);
+  }
+
+  .payment-ref-cell {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .expand-icon {
+    display: inline-block;
+    transition: transform 0.2s;
+    font-size: 10px;
+    color: var(--text-secondary);
+    width: 16px;
+  }
+
+  .expanded .expand-icon {
+    transform: rotate(90deg);
+  }
+
+  /* --- Detail Panel --- */
+  .detail-panel {
+    display: none;
+    background: #f8fafc;
+  }
+
+  .detail-panel.visible {
+    display: table-row;
+  }
+
+  .detail-content {
+    padding: 20px 16px;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .detail-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+
+  .detail-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 5px 0;
+    font-size: 13px;
+    gap: 12px;
+  }
+
+  .detail-row .dl {
+    color: var(--text-secondary);
+    font-weight: 500;
+    min-width: 110px;
+    flex-shrink: 0;
+  }
+
+  .detail-row .dv {
+    font-weight: 500;
+    text-align: right;
+    word-break: break-word;
+  }
+
+  /* --- Score Bar --- */
+  .score-bar-container {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .score-bar-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .score-bar-track {
+    position: relative;
+    height: 28px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    overflow: visible;
+  }
+
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+    position: relative;
+  }
+
+  .score-bar-fill.fill-high { background: linear-gradient(90deg, #fbbf24, #dc2626); }
+  .score-bar-fill.fill-medium { background: linear-gradient(90deg, #34d399, #f59e0b); }
+  .score-bar-fill.fill-low { background: linear-gradient(90deg, #34d399, #059669); }
+
+  .score-bar-value {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  .score-bar-markers {
+    position: relative;
+    height: 20px;
+    margin-top: 4px;
+  }
+
+  .score-bar-marker {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .score-bar-marker::before {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 6px;
+    background: var(--text-secondary);
+    margin: 0 auto 2px;
+  }
+
+  .score-big {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .score-big.score-high { color: var(--danger); }
+  .score-big.score-medium { color: var(--warning); }
+  .score-big.score-low { color: var(--success); }
+
+  /* --- Decision Actions --- */
+  .decision-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+
+  .decision-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .decision-note {
+    width: 100%;
+    height: 60px;
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    resize: vertical;
+    background: var(--surface);
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .decision-note:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.12);
+  }
+
+  .decision-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .decision-resolved {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .decision-resolved.resolved-accepted {
+    background: var(--success-light);
+    color: var(--success);
+    border: 1px solid #6ee7b7;
+  }
+
+  .decision-resolved.resolved-rejected {
+    background: var(--danger-light);
+    color: var(--danger);
+    border: 1px solid #fca5a5;
+  }
+
+  .decision-resolved.resolved-escalated {
+    background: var(--warning-light);
+    color: var(--warning);
+    border: 1px solid #fcd34d;
+  }
+
+  /* --- Audit Trail --- */
+  .audit-table td {
+    font-size: 12px;
+    vertical-align: top;
+  }
+
+  .audit-table .timestamp-cell {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  .webhook-json-toggle {
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    font-family: var(--font);
+    padding: 0;
+  }
+
+  .webhook-json-toggle:hover {
+    color: #1e40af;
+  }
+
+  .webhook-json-block {
+    display: none;
+    margin-top: 6px;
+  }
+
+  .webhook-json-block.visible {
+    display: block;
+  }
+
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    line-height: 1.5;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  /* --- Webhook Event Log --- */
+  .collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .collapsible-header .toggle-icon {
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+  }
+
+  .collapsible-header.open .toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  .collapsible-body {
+    display: none;
+    margin-top: 16px;
+  }
+
+  .collapsible-body.visible {
+    display: block;
+  }
+
+  .webhook-event-card {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .webhook-event-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .webhook-event-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .webhook-event-type {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .webhook-event-time {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  .webhook-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin: 10px 0 4px;
+  }
+
+  .link-to-tool {
+    font-size: 12px;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .link-to-tool:hover {
+    text-decoration: underline;
+  }
+
+  /* --- Empty State --- */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text-secondary);
+  }
+
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.3;
+  }
+
+  .empty-state h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .empty-state p {
+    font-size: 14px;
+  }
+
+  /* --- Toast Notifications --- */
+  .toast-container {
+    position: fixed;
+    top: 72px;
+    right: 24px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .toast {
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    pointer-events: auto;
+    animation: toastIn 0.3s ease forwards;
+    max-width: 380px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toast.toast-out {
+    animation: toastOut 0.3s ease forwards;
+  }
+
+  .toast-success { background: #065f46; color: #d1fae5; }
+  .toast-warning { background: #92400e; color: #fef3c7; }
+  .toast-danger { background: #991b1b; color: #fee2e2; }
+  .toast-info { background: #1e3a5f; color: #dbeafe; }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(40px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes toastOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(40px); }
+  }
+
+  /* --- Responsive --- */
+  @media (max-width: 768px) {
+    .top-nav { padding: 0 12px; }
+    .top-nav .brand { margin-right: 16px; font-size: 16px; }
+    .top-nav nav a { font-size: 12px; padding: 4px 8px; }
+    .container { padding: 20px 12px 48px; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .stats-bar { gap: 12px; }
+    .stat-divider { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<div class="top-nav">
+  <div class="brand">Bridger <span>POC</span></div>
+  <nav>
+    <a href="01-pain001-parser.html">01 pain.001 Parser</a>
+    <a href="02-api-explorer.html">02 API Explorer</a>
+    <a href="03-screening-flow.html">03 Screening Flow</a>
+    <a href="04-webhook-simulator.html">04 Webhook Simulator</a>
+    <a href="05-compliance-dashboard.html" class="active">05 Compliance Dashboard</a>
+  </nav>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Main Content -->
+<div class="container">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Compliance Review Dashboard</h1>
+    <p class="page-subtitle">Review screening alerts, make accept/reject/escalate decisions, and generate downstream Trax webhook events.</p>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-item stat-pending">
+      <div>
+        <div class="stat-num" id="statPending">0</div>
+        <div class="stat-label">Pending Review</div>
+      </div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item stat-resolved">
+      <div>
+        <div class="stat-num" id="statResolved">0</div>
+        <div class="stat-label">Resolved</div>
+      </div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item stat-total">
+      <div>
+        <div class="stat-num" id="statTotal">0</div>
+        <div class="stat-label">Total Alerts</div>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="header-actions">
+      <button class="btn btn-outline btn-sm" id="btnLoadScreening">Load from Screening</button>
+      <button class="btn btn-primary btn-sm" id="btnLoadSample">Load Sample Scenario</button>
+    </div>
+  </div>
+
+  <!-- Alerts Table -->
+  <div class="card" id="alertsCard">
+    <div class="card-header">
+      <div class="card-title">Screening Alerts</div>
+      <span class="card-badge badge-amber" id="alertsCount">0 alerts</span>
+    </div>
+    <div id="alertsContent">
+      <div class="empty-state" id="emptyState">
+        <div class="icon">&#x1F6E1;</div>
+        <h3>No Alerts Loaded</h3>
+        <p>Load alerts from a prior screening run or generate a sample scenario to begin reviewing.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Trail -->
+  <div class="card" id="auditCard" style="display:none">
+    <div class="card-header">
+      <div class="card-title">Audit Trail</div>
+      <span class="card-badge badge-blue" id="auditCount">0 decisions</span>
+    </div>
+    <div class="table-wrapper">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Alert ID</th>
+            <th>Party</th>
+            <th>Decision</th>
+            <th>Trax Status</th>
+            <th>Webhook Event</th>
+            <th>Officer Note</th>
+          </tr>
+        </thead>
+        <tbody id="auditBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Webhook Event Log -->
+  <div class="card" id="webhookCard" style="display:none">
+    <div class="collapsible-header" id="webhookToggle">
+      <div class="card-title">Webhook Event Log</div>
+      <span class="toggle-icon">&#9660;</span>
+    </div>
+    <div class="collapsible-body" id="webhookBody"></div>
+  </div>
+
+</div>
+
+<!-- Shared Libraries -->
+<script src="mock-bridger-server.js"></script>
+<script src="sample-data.js"></script>
+
+<!-- Application Logic -->
+<script>
+(function() {
+  'use strict';
+
+  // --- State ---
+  var alerts = [];
+  var auditTrail = [];
+  var webhookEvents = [];
+
+  // --- DOM Refs ---
+  var btnLoadScreening = document.getElementById('btnLoadScreening');
+  var btnLoadSample = document.getElementById('btnLoadSample');
+  var alertsContent = document.getElementById('alertsContent');
+  var emptyState = document.getElementById('emptyState');
+  var alertsCount = document.getElementById('alertsCount');
+  var auditCard = document.getElementById('auditCard');
+  var auditBody = document.getElementById('auditBody');
+  var auditCount = document.getElementById('auditCount');
+  var webhookCard = document.getElementById('webhookCard');
+  var webhookToggle = document.getElementById('webhookToggle');
+  var webhookBody = document.getElementById('webhookBody');
+  var toastContainer = document.getElementById('toastContainer');
+
+  // --- Toast ---
+  function showToast(message, type) {
+    type = type || 'info';
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+    setTimeout(function() {
+      toast.classList.add('toast-out');
+      setTimeout(function() {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 300);
+    }, 3000);
+  }
+
+  // --- Utilities ---
+  function esc(str) {
+    if (str == null) return '';
+    var div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+  }
+
+  function scoreClass(score) {
+    if (score >= 90) return 'high';
+    if (score >= 30) return 'medium';
+    return 'low';
+  }
+
+  function generateAlertId(index) {
+    return 'ALT-' + String(100 + index).padStart(4, '0');
+  }
+
+  function formatTimestamp(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    return d.toISOString().replace('T', ' ').substring(0, 19);
+  }
+
+  function formatAmount(val) {
+    if (!val) return '';
+    var num = parseFloat(val);
+    if (isNaN(num)) return esc(val);
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // --- Stats ---
+  function updateStats() {
+    var pending = 0, resolved = 0;
+    for (var i = 0; i < alerts.length; i++) {
+      if (alerts[i].decision) {
+        resolved++;
+      } else {
+        pending++;
+      }
+    }
+    document.getElementById('statPending').textContent = pending;
+    document.getElementById('statResolved').textContent = resolved;
+    document.getElementById('statTotal').textContent = alerts.length;
+    alertsCount.textContent = alerts.length + ' alert' + (alerts.length !== 1 ? 's' : '');
+  }
+
+  // --- Build alerts from screening records ---
+  function buildAlerts(records, sourceEntities) {
+    alerts = [];
+    var idx = 0;
+    for (var i = 0; i < records.length; i++) {
+      var rec = records[i];
+      if (!rec.HasScreeningListMatches || rec.WatchlistResults.length === 0) continue;
+      var topMatch = rec.WatchlistResults[0];
+      var inputName = rec._meta ? rec._meta.inputName : (rec.Details && rec.Details.InputName ? (rec.Details.InputName.Full || '') : '');
+
+      // Find source entity info
+      var sourceEntity = null;
+      if (sourceEntities) {
+        for (var j = 0; j < sourceEntities.length; j++) {
+          var eName = sourceEntities[j].Entity.Name.Full || '';
+          if (eName === inputName) {
+            sourceEntity = sourceEntities[j];
+            break;
+          }
+        }
+      }
+
+      alerts.push({
+        alertId: generateAlertId(idx),
+        resultId: rec.ResultID,
+        record: rec,
+        inputName: inputName,
+        topMatch: topMatch,
+        score: topMatch.EntityScore,
+        listName: topMatch.File.Name,
+        matchName: topMatch.BestName,
+        status: 'Pending Review',
+        decision: null,
+        decisionNote: '',
+        traxStatus: null,
+        traxCode: null,
+        webhookPayload: null,
+        paymentRef: sourceEntity ? sourceEntity._paymentRef : ('REF-' + String(1000 + idx)),
+        partyType: sourceEntity ? sourceEntity._partyType : 'Creditor',
+        amount: sourceEntity ? sourceEntity._amount : '',
+        currency: sourceEntity ? sourceEntity._currency : '',
+        remittance: sourceEntity ? sourceEntity._remittance : '',
+        account: (rec.Details && rec.Details.InputEntity && rec.Details.InputEntity.IDs && rec.Details.InputEntity.IDs.length > 0) ? rec.Details.InputEntity.IDs[0].Number : '',
+        address: (rec.Details && rec.Details.InputAddress && rec.Details.InputAddress.length > 0) ? rec.Details.InputAddress[0] : (rec.Details && rec.Details.InputEntity && rec.Details.InputEntity.Addresses && rec.Details.InputEntity.Addresses.length > 0 ? rec.Details.InputEntity.Addresses[0] : null),
+        expanded: false
+      });
+      idx++;
+    }
+    return alerts;
+  }
+
+  // --- Load from Screening (sessionStorage) ---
+  btnLoadScreening.addEventListener('click', function() {
+    var raw = sessionStorage.getItem('bridger-poc-suspects') || sessionStorage.getItem('bridger-poc-results');
+    if (!raw) {
+      showToast('No screening data found in session. Run Tool 03 first.', 'warning');
+      return;
+    }
+    try {
+      var data = JSON.parse(raw);
+      var records = [];
+      var sourceEntities = null;
+      if (data.SearchResults && data.SearchResults.Records) {
+        records = data.SearchResults.Records;
+      } else if (Array.isArray(data)) {
+        records = data;
+      } else if (data.records) {
+        records = data.records;
+      }
+      if (data.sourceEntities) {
+        sourceEntities = data.sourceEntities;
+      }
+      // We may need to push these into MockBridger to enable resultsSetRecordState
+      // Re-run search to populate internal state
+      if (records.length > 0) {
+        buildAlerts(records, sourceEntities);
+        renderAlerts();
+        updateStats();
+        showToast('Loaded ' + alerts.length + ' alert(s) from screening data.', 'success');
+      } else {
+        showToast('No matching records found in screening data.', 'warning');
+      }
+    } catch (e) {
+      showToast('Failed to parse screening data: ' + e.message, 'danger');
+    }
+  });
+
+  // --- Load Sample Scenario ---
+  btnLoadSample.addEventListener('click', function() {
+    MockBridger.reset();
+    auditTrail = [];
+    webhookEvents = [];
+
+    var sampleEntities = [
+      {
+        RecordID: 1,
+        Entity: {
+          EntityType: 'Business',
+          Name: { Full: 'Ahmad Trading Co' },
+          Addresses: [{ Street1: '45 Commerce Road', City: 'Dubai', Country: 'AE', Type: 'Current' }],
+          IDs: [{ Number: 'AE070331234567890123456', Type: 'IBAN' }]
+        },
+        _paymentRef: 'E2E-2026-011',
+        _partyType: 'Creditor',
+        _amount: '120000.00',
+        _currency: 'USD',
+        _remittance: 'Textiles import - Container MSKU1234567'
+      },
+      {
+        RecordID: 2,
+        Entity: {
+          EntityType: 'Business',
+          Name: { Full: 'Volkov Industries AG' },
+          Addresses: [{ Street1: 'Bahnhofstrasse 21', City: 'Zurich', Country: 'CH', Type: 'Current' }],
+          IDs: [{ Number: 'CH9300762011623852957', Type: 'IBAN' }]
+        },
+        _paymentRef: 'E2E-2026-012',
+        _partyType: 'Creditor',
+        _amount: '92500.00',
+        _currency: 'CHF',
+        _remittance: 'Industrial equipment - Contract C-4455'
+      },
+      {
+        RecordID: 3,
+        Entity: {
+          EntityType: 'Business',
+          Name: { Full: 'Petromax Energy Corporation' },
+          Addresses: [{ Street1: 'Av. Libertador 1234', City: 'Caracas', Country: 'VE', Type: 'Current' }],
+          IDs: [{ Number: 'VE89000000001234567890', Type: 'IBAN' }]
+        },
+        _paymentRef: 'E2E-2026-014',
+        _partyType: 'Creditor',
+        _amount: '200000.00',
+        _currency: 'USD',
+        _remittance: 'Energy consulting services Q4 2025'
+      },
+      {
+        RecordID: 4,
+        Entity: {
+          EntityType: 'Individual',
+          Name: { Full: 'Carlos Mendez' },
+          Addresses: [{ Country: 'VE', Type: 'Current' }],
+          IDs: []
+        },
+        _paymentRef: 'E2E-2026-014',
+        _partyType: 'Ultimate Creditor',
+        _amount: '200000.00',
+        _currency: 'USD',
+        _remittance: 'Energy consulting services Q4 2025'
+      }
+    ];
+
+    var searchResult = MockBridger.listsSearch({
+      EntitySearchRequest: {
+        Configuration: {
+          PredefinedSearchName: 'ComplianceDashboard',
+          AssignResultTo: { Division: 'Compliance', RolesOrUsers: ['ComplianceTeam'], Type: 'Role' }
+        },
+        Input: {
+          Records: sampleEntities
+        }
+      }
+    });
+
+    var records = searchResult.SearchResults.Records.filter(function(r) {
+      return r.HasScreeningListMatches && r.WatchlistResults.length > 0;
+    });
+
+    buildAlerts(records, sampleEntities);
+    renderAlerts();
+    updateStats();
+    renderAuditTrail();
+    renderWebhookLog();
+    showToast('Loaded 4 sample compliance alerts.', 'success');
+  });
+
+  // --- Render Alerts Table ---
+  function renderAlerts() {
+    if (alerts.length === 0) {
+      alertsContent.innerHTML = '<div class="empty-state" id="emptyState">' +
+        '<div class="icon">&#x1F6E1;</div>' +
+        '<h3>No Alerts Loaded</h3>' +
+        '<p>Load alerts from a prior screening run or generate a sample scenario to begin reviewing.</p>' +
+      '</div>';
+      return;
+    }
+
+    var html = '<div class="table-wrapper"><table>' +
+      '<thead><tr>' +
+        '<th></th>' +
+        '<th>Alert ID</th>' +
+        '<th>Payment Ref</th>' +
+        '<th>Party Name</th>' +
+        '<th>Match Score</th>' +
+        '<th>Top List</th>' +
+        '<th>Status</th>' +
+        '<th>Actions</th>' +
+      '</tr></thead><tbody>';
+
+    for (var i = 0; i < alerts.length; i++) {
+      var a = alerts[i];
+      var sc = scoreClass(a.score);
+      var rowClass = 'alert-row score-' + sc;
+      if (a.expanded) rowClass += ' expanded';
+
+      var pillClass = 'pill-pending';
+      var statusLabel = 'Pending Review';
+      if (a.decision === 'accept') { pillClass = 'pill-accepted'; statusLabel = 'Accepted'; }
+      else if (a.decision === 'reject') { pillClass = 'pill-rejected'; statusLabel = 'Rejected'; }
+      else if (a.decision === 'escalate') { pillClass = 'pill-escalated'; statusLabel = 'Escalated'; }
+
+      html += '<tr class="' + rowClass + '" data-idx="' + i + '">' +
+        '<td><span class="expand-icon">&#9654;</span></td>' +
+        '<td class="alert-id-cell">' + esc(a.alertId) + '</td>' +
+        '<td class="payment-ref-cell">' + esc(a.paymentRef) + '</td>' +
+        '<td style="font-weight:500">' + esc(a.inputName) + '</td>' +
+        '<td class="score-cell score-' + sc + '">' + a.score + '</td>' +
+        '<td>' + esc(a.listName) + '</td>' +
+        '<td><span class="pill ' + pillClass + '">' + esc(statusLabel) + '</span></td>' +
+        '<td>' + (a.decision ? '<span style="font-size:12px;color:var(--text-secondary);">Resolved</span>' : '<span style="font-size:12px;color:var(--primary);font-weight:500;">Review</span>') + '</td>' +
+      '</tr>';
+
+      // Detail panel row
+      html += '<tr class="detail-panel' + (a.expanded ? ' visible' : '') + '" data-detail-idx="' + i + '">' +
+        '<td colspan="8">' + renderDetailPanel(a, i) + '</td>' +
+      '</tr>';
+    }
+
+    html += '</tbody></table></div>';
+    alertsContent.innerHTML = html;
+    bindAlertRowClicks();
+    bindDecisionButtons();
+  }
+
+  // --- Render Detail Panel ---
+  function renderDetailPanel(a, idx) {
+    var addr = a.address;
+    var addrStr = '';
+    if (addr) {
+      addrStr = [addr.Street1, addr.City, addr.StateProvince, addr.PostalCode, addr.Country].filter(Boolean).join(', ');
+    }
+
+    var topMatch = a.topMatch;
+    var sc = scoreClass(a.score);
+    var aliases = [];
+    // Get aliases from the watchlist
+    for (var w = 0; w < MockBridger.WATCHLIST.length; w++) {
+      if (MockBridger.WATCHLIST[w].id === topMatch.WatchlistEntryId) {
+        aliases = MockBridger.WATCHLIST[w].aliases || [];
+        break;
+      }
+    }
+
+    var html = '<div class="detail-content">';
+
+    // Two column layout
+    html += '<div class="detail-grid">';
+
+    // LEFT - Payment Party
+    html += '<div class="detail-section">' +
+      '<div class="detail-section-title">Payment Party</div>' +
+      '<div class="detail-row"><span class="dl">Name</span><span class="dv" style="font-weight:600">' + esc(a.inputName) + '</span></div>' +
+      '<div class="detail-row"><span class="dl">Address</span><span class="dv">' + esc(addrStr || 'N/A') + '</span></div>' +
+      '<div class="detail-row"><span class="dl">IBAN / Account</span><span class="dv" style="font-family:monospace;font-size:12px">' + esc(a.account || 'N/A') + '</span></div>' +
+      '<div class="detail-row"><span class="dl">Party Type</span><span class="dv">' + esc(a.partyType) + '</span></div>' +
+      '<div class="detail-row"><span class="dl">Payment Amount</span><span class="dv" style="font-weight:600">' + esc(a.currency) + ' ' + formatAmount(a.amount) + '</span></div>' +
+      '<div class="detail-row"><span class="dl">Remittance Info</span><span class="dv">' + esc(a.remittance || 'N/A') + '</span></div>' +
+    '</div>';
+
+    // RIGHT - Watchlist Match
+    html += '<div class="detail-section">' +
+      '<div class="detail-section-title">Watchlist Match</div>' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">' +
+        '<div>' +
+          '<div class="detail-row" style="padding:0"><span class="dl">Entity Name</span><span class="dv" style="font-weight:600">' + esc(topMatch.BestName) + '</span></div>' +
+          '<div class="detail-row" style="padding:0;margin-top:2px"><span class="dl">List</span><span class="dv">' + esc(topMatch.File.Name) + '</span></div>' +
+        '</div>' +
+        '<div style="text-align:center;min-width:70px">' +
+          '<div class="score-big score-' + sc + '">' + a.score + '</div>' +
+          '<div style="font-size:10px;color:var(--text-secondary);font-weight:600">SCORE</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="detail-row"><span class="dl">Reason Listed</span><span class="dv">' + esc(topMatch.ReasonListed) + '</span></div>' +
+      '<div class="detail-row"><span class="dl">Date Listed</span><span class="dv">' + esc(topMatch.DateListed) + '</span></div>' +
+      '<div class="detail-row"><span class="dl">Country</span><span class="dv">' + esc(topMatch.Country) + '</span></div>' +
+      '<div class="detail-row"><span class="dl">Aliases</span><span class="dv">' + esc(aliases.join(', ') || 'None') + '</span></div>' +
+
+      // Score Bar
+      '<div class="score-bar-container">' +
+        '<div class="score-bar-label">Match Score Visualization</div>' +
+        '<div class="score-bar-track">' +
+          '<div class="score-bar-fill fill-' + sc + '" style="width:' + a.score + '%">' +
+            '<span class="score-bar-value">' + a.score + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="score-bar-markers">' +
+          '<div class="score-bar-marker" style="left:0%">0</div>' +
+          '<div class="score-bar-marker" style="left:30%">30</div>' +
+          '<div class="score-bar-marker" style="left:90%">90</div>' +
+          '<div class="score-bar-marker" style="left:100%">100</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    html += '</div>'; // end detail-grid
+
+    // Decision Section
+    html += '<div class="decision-section">';
+    html += '<div class="decision-section-title">Decision Actions</div>';
+
+    if (a.decision) {
+      var resolvedClass = 'resolved-' + (a.decision === 'accept' ? 'accepted' : a.decision === 'reject' ? 'rejected' : 'escalated');
+      var resolvedLabel = a.decision === 'accept' ? 'Accepted (False Positive)' : a.decision === 'reject' ? 'Rejected (True Match)' : 'Escalated to Senior Compliance';
+      html += '<div class="decision-resolved ' + resolvedClass + '">' +
+        '<span>' + esc(resolvedLabel) + '</span>' +
+        (a.traxStatus ? '<span class="pill" style="background:rgba(0,0,0,0.1);color:inherit;margin-left:8px">' + esc(a.traxStatus) + '</span>' : '') +
+      '</div>';
+      if (a.decisionNote) {
+        html += '<div style="margin-top:8px;font-size:12px;color:var(--text-secondary)"><strong>Note:</strong> ' + esc(a.decisionNote) + '</div>';
+      }
+    } else {
+      html += '<textarea class="decision-note" data-note-idx="' + idx + '" placeholder="Officer notes (optional)..."></textarea>';
+      html += '<div class="decision-buttons">' +
+        '<button class="btn btn-success btn-sm" data-action="accept" data-action-idx="' + idx + '">Accept (False Positive)</button>' +
+        '<button class="btn btn-danger btn-sm" data-action="reject" data-action-idx="' + idx + '">Reject (True Match)</button>' +
+        '<button class="btn btn-warning btn-sm" data-action="escalate" data-action-idx="' + idx + '">Escalate</button>' +
+      '</div>';
+    }
+
+    html += '</div>'; // end decision-section
+    html += '</div>'; // end detail-content
+    return html;
+  }
+
+  // --- Bind row clicks ---
+  function bindAlertRowClicks() {
+    var rows = document.querySelectorAll('.alert-row');
+    for (var i = 0; i < rows.length; i++) {
+      rows[i].addEventListener('click', function(e) {
+        // Don't toggle on button/textarea clicks
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'TEXTAREA') return;
+        var idx = parseInt(this.getAttribute('data-idx'), 10);
+        alerts[idx].expanded = !alerts[idx].expanded;
+        // Toggle classes
+        this.classList.toggle('expanded');
+        var detailRow = document.querySelector('[data-detail-idx="' + idx + '"]');
+        if (detailRow) detailRow.classList.toggle('visible');
+      });
+    }
+  }
+
+  // --- Bind decision buttons ---
+  function bindDecisionButtons() {
+    var buttons = document.querySelectorAll('[data-action]');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener('click', function(e) {
+        e.stopPropagation();
+        var action = this.getAttribute('data-action');
+        var idx = parseInt(this.getAttribute('data-action-idx'), 10);
+        handleDecision(idx, action);
+      });
+    }
+  }
+
+  // --- Handle Decision ---
+  function handleDecision(idx, action) {
+    var a = alerts[idx];
+    if (a.decision) return; // Already resolved
+
+    // Get note
+    var noteEl = document.querySelector('[data-note-idx="' + idx + '"]');
+    var note = noteEl ? noteEl.value.trim() : '';
+
+    var alertState, status, traxStatus, traxCode, assignedTo;
+
+    if (action === 'accept') {
+      alertState = 'Closed';
+      status = 'False Positive';
+      traxStatus = 'EXTERNAL_ACCEPTED';
+      traxCode = 'PAY_PMT_REL_EXTERNAL_ACCEPTED';
+    } else if (action === 'reject') {
+      alertState = 'Closed';
+      status = 'True Match';
+      traxStatus = 'EXTERNAL_REJECTED';
+      traxCode = 'PAY_PMT_REL_EXTERNAL_REJECTED';
+    } else {
+      alertState = 'Open';
+      status = 'Escalated';
+      traxStatus = 'EXTERNAL_SUSPECT';
+      traxCode = 'PAY_PMT_REL_EXTERNAL_SUSPECT';
+      assignedTo = ['SeniorCompliance'];
+    }
+
+    // 1. Update record state via MockBridger
+    var stateUpdate = {
+      AlertState: alertState,
+      Status: status,
+      Note: note || ('Decision: ' + action),
+      _user: 'ComplianceOfficer'
+    };
+    if (assignedTo) {
+      stateUpdate.AssignedTo = assignedTo;
+      stateUpdate.AssignmentType = 'User';
+    }
+    MockBridger.resultsSetRecordState(a.resultId, stateUpdate);
+
+    // 2. Generate webhook payload
+    var eventType = alertState === 'Closed' ? 'AlertStateClosed' : 'AlertDecisionApplied';
+    MockBridger.generateWebhookPayload(a.resultId, eventType, {
+      status: status,
+      state: alertState,
+      assignedTo: assignedTo ? assignedTo[0] : 'ComplianceTeam'
+    }).then(function(webhookEntry) {
+      // Store webhook payload
+      a.webhookPayload = webhookEntry;
+      webhookEvents.push({
+        alertId: a.alertId,
+        partyName: a.inputName,
+        decision: action,
+        traxStatus: traxStatus,
+        entry: webhookEntry
+      });
+
+      // 3. Update alert state
+      a.decision = action;
+      a.decisionNote = note;
+      a.status = status;
+      a.traxStatus = traxStatus;
+      a.traxCode = traxCode;
+
+      // 4. Add to audit trail
+      auditTrail.push({
+        timestamp: new Date().toISOString(),
+        alertId: a.alertId,
+        partyName: a.inputName,
+        decision: action,
+        traxStatus: traxStatus,
+        traxCode: traxCode,
+        webhookEntry: webhookEntry,
+        note: note
+      });
+
+      // 5. Re-render
+      renderAlerts();
+      updateStats();
+      renderAuditTrail();
+      renderWebhookLog();
+
+      // Re-expand the decided alert
+      alerts[idx].expanded = true;
+      var row = document.querySelector('.alert-row[data-idx="' + idx + '"]');
+      var detail = document.querySelector('[data-detail-idx="' + idx + '"]');
+      if (row) row.classList.add('expanded');
+      if (detail) detail.classList.add('visible');
+
+      // 6. Toast
+      var decisionLabel = action === 'accept' ? 'EXTERNAL_ACCEPTED' : action === 'reject' ? 'EXTERNAL_REJECTED' : 'EXTERNAL_SUSPECT (Escalated)';
+      var toastType = action === 'accept' ? 'success' : action === 'reject' ? 'danger' : 'warning';
+      showToast('Alert resolved: ' + decisionLabel, toastType);
+    });
+  }
+
+  // --- Render Audit Trail ---
+  function renderAuditTrail() {
+    if (auditTrail.length === 0) {
+      auditCard.style.display = 'none';
+      return;
+    }
+    auditCard.style.display = '';
+    auditCount.textContent = auditTrail.length + ' decision' + (auditTrail.length !== 1 ? 's' : '');
+
+    var html = '';
+    for (var i = auditTrail.length - 1; i >= 0; i--) {
+      var entry = auditTrail[i];
+      var decisionPillClass = entry.decision === 'accept' ? 'pill-accepted' : entry.decision === 'reject' ? 'pill-rejected' : 'pill-escalated';
+      var decisionLabel = entry.decision === 'accept' ? 'Accept' : entry.decision === 'reject' ? 'Reject' : 'Escalate';
+
+      html += '<tr>' +
+        '<td class="timestamp-cell">' + esc(formatTimestamp(entry.timestamp)) + '</td>' +
+        '<td style="font-family:monospace;font-size:12px;color:var(--primary)">' + esc(entry.alertId) + '</td>' +
+        '<td style="font-weight:500">' + esc(entry.partyName) + '</td>' +
+        '<td><span class="pill ' + decisionPillClass + '">' + esc(decisionLabel) + '</span></td>' +
+        '<td style="font-family:monospace;font-size:11px">' + esc(entry.traxCode) + '</td>' +
+        '<td>' +
+          '<button class="webhook-json-toggle" onclick="toggleAuditWebhook(this)">View Payload</button>' +
+          '<div class="webhook-json-block">' +
+            '<pre>' + esc(JSON.stringify(entry.webhookEntry.payload, null, 2)) + '</pre>' +
+          '</div>' +
+        '</td>' +
+        '<td style="max-width:180px;font-size:12px;color:var(--text-secondary)">' + esc(entry.note || '-') + '</td>' +
+      '</tr>';
+    }
+    auditBody.innerHTML = html;
+  }
+
+  // Global for inline onclick
+  window.toggleAuditWebhook = function(btn) {
+    var block = btn.nextElementSibling;
+    if (block) {
+      block.classList.toggle('visible');
+      btn.textContent = block.classList.contains('visible') ? 'Hide Payload' : 'View Payload';
+    }
+  };
+
+  // --- Render Webhook Event Log ---
+  function renderWebhookLog() {
+    if (webhookEvents.length === 0) {
+      webhookCard.style.display = 'none';
+      return;
+    }
+    webhookCard.style.display = '';
+
+    var html = '';
+    for (var i = webhookEvents.length - 1; i >= 0; i--) {
+      var ev = webhookEvents[i];
+      var entry = ev.entry;
+      var eventTypeLabel = ev.decision === 'accept' || ev.decision === 'reject' ? 'AlertClosed' : 'AlertDecisionApplied';
+      var eventTypeColor = ev.decision === 'accept' ? 'var(--success)' : ev.decision === 'reject' ? 'var(--danger)' : 'var(--warning)';
+
+      html += '<div class="webhook-event-card">' +
+        '<div class="webhook-event-header">' +
+          '<div>' +
+            '<span class="webhook-event-type" style="color:' + eventTypeColor + '">' + esc(eventTypeLabel) + '</span>' +
+            '<span style="margin-left:8px;font-size:12px;color:var(--text-secondary)">' + esc(ev.alertId) + ' - ' + esc(ev.partyName) + '</span>' +
+          '</div>' +
+          '<span class="webhook-event-time">' + esc(formatTimestamp(entry.timestamp)) + '</span>' +
+        '</div>';
+
+      // Headers
+      html += '<div class="webhook-section-label">Request Headers</div>' +
+        '<pre>' + esc(formatHeaders(entry.headers)) + '</pre>';
+
+      // Payload
+      html += '<div class="webhook-section-label">Payload</div>' +
+        '<pre>' + esc(JSON.stringify(entry.payload, null, 2)) + '</pre>';
+
+      // Link to Tool 4
+      html += '<div style="margin-top:8px">' +
+        '<a href="04-webhook-simulator.html" class="link-to-tool">Open in Webhook Simulator &#8594;</a>' +
+      '</div>';
+
+      html += '</div>';
+    }
+
+    webhookBody.innerHTML = html;
+  }
+
+  function formatHeaders(headers) {
+    var lines = [];
+    for (var key in headers) {
+      if (headers.hasOwnProperty(key)) {
+        lines.push(key + ': ' + headers[key]);
+      }
+    }
+    return lines.join('\n');
+  }
+
+  // --- Webhook Log Toggle ---
+  webhookToggle.addEventListener('click', function() {
+    this.classList.toggle('open');
+    webhookBody.classList.toggle('visible');
+  });
+
+  // --- Initial render ---
+  updateStats();
+
+})();
+</script>
+
+</body>
+</html>

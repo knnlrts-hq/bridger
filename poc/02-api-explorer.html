@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Explorer - Bridger XG5 POC</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #1a56db;
+    --primary-light: #e8effc;
+    --primary-dark: #1342a8;
+    --success: #059669;
+    --success-light: #ecfdf5;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* --- Nav Bar --- */
+  .navbar {
+    background: var(--primary);
+    color: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .navbar-brand {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-right: 32px;
+    white-space: nowrap;
+  }
+  .navbar-links {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    overflow-x: auto;
+  }
+  .navbar-links a {
+    color: rgba(255,255,255,0.75);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .navbar-links a:hover {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+  }
+  .navbar-links a.active {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+
+  /* --- Layout --- */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  /* --- Tabs --- */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .tab-btn {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    color: var(--text-secondary);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover {
+    color: var(--primary);
+  }
+  .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+  .tab-panel {
+    display: none;
+  }
+  .tab-panel.active {
+    display: block;
+  }
+
+  /* --- Card --- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  /* --- Forms --- */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-family: var(--font);
+    font-size: 14px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.12);
+  }
+  .form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .checkbox-group input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+  }
+  .checkbox-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* --- Buttons --- */
+  .btn {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: var(--primary-dark);
+    box-shadow: 0 2px 6px rgba(26,86,219,0.3);
+  }
+  .btn-success {
+    background: var(--success);
+    color: #fff;
+  }
+  .btn-success:hover {
+    background: #047857;
+  }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+  }
+  .btn-danger:hover {
+    background: #b91c1c;
+  }
+  .btn-outline {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover {
+    background: var(--bg);
+    border-color: #cbd5e1;
+  }
+  .btn-sm {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  /* --- JSON Viewer --- */
+  .json-output {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-x: auto;
+    max-height: 500px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .json-output:empty::before {
+    content: "Response will appear here...";
+    color: #64748b;
+    font-style: italic;
+  }
+  .json-key { color: #f87171; }
+  .json-string { color: #4ade80; }
+  .json-number { color: #60a5fa; }
+  .json-boolean { color: #fb923c; }
+  .json-null { color: #94a3b8; }
+
+  /* --- Split panes --- */
+  .split-pane {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 800px) {
+    .split-pane {
+      grid-template-columns: 1fr;
+    }
+  }
+  .pane-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  /* --- Summary Banner --- */
+  .summary-banner {
+    display: flex;
+    gap: 24px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .summary-banner.clean {
+    background: var(--success-light);
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+  }
+  .summary-banner.alert {
+    background: var(--danger-light);
+    border: 1px solid #fecaca;
+    color: #991b1b;
+  }
+  .summary-banner .stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .summary-banner .stat-number {
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  /* --- Entity Row --- */
+  .entity-row {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: var(--bg);
+    position: relative;
+  }
+  .entity-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .entity-row-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+  .entity-row .form-grid {
+    margin-bottom: 8px;
+  }
+
+  /* --- Match Card --- */
+  .match-card {
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: #fff5f5;
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+  }
+  .match-card:hover {
+    box-shadow: 0 2px 8px rgba(220,38,38,0.12);
+  }
+  .match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .match-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--danger);
+  }
+  .match-score {
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--danger);
+  }
+  .match-details {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+  .match-details span {
+    display: inline-block;
+    margin-right: 16px;
+  }
+  .match-expand {
+    display: none;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #fecaca;
+  }
+  .match-card.expanded .match-expand {
+    display: block;
+  }
+
+  /* --- Table --- */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .data-table th {
+    background: var(--bg);
+    font-weight: 700;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--border);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+  }
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .data-table tr:hover td {
+    background: var(--bg);
+  }
+
+  /* --- Status Token --- */
+  .token-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .token-status.valid {
+    background: var(--success-light);
+    color: var(--success);
+  }
+  .token-status.invalid {
+    background: var(--danger-light);
+    color: var(--danger);
+  }
+  .token-status .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* --- Section Divider --- */
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin: 20px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* --- Misc --- */
+  .hidden { display: none !important; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mt-12 { margin-top: 12px; }
+  .text-muted { color: var(--text-secondary); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- Nav Bar -->
+<nav class="navbar">
+  <div class="navbar-brand">Bridger POC</div>
+  <ul class="navbar-links">
+    <li><a href="01-payment-parser.html">Payment Parser</a></li>
+    <li><a href="02-api-explorer.html" class="active">API Explorer</a></li>
+    <li><a href="03-screening-flow.html">Screening Flow</a></li>
+    <li><a href="04-webhook-tester.html">Webhook Tester</a></li>
+    <li><a href="05-end-to-end.html">End-to-End Demo</a></li>
+  </ul>
+</nav>
+
+<div class="container">
+  <h1 class="page-title">API Explorer</h1>
+  <p class="page-subtitle">Interactive exploration of the Bridger XG5 REST API endpoints</p>
+
+  <!-- Token Status Bar -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div id="tokenStatusBar">
+      <span class="token-status invalid"><span class="dot"></span> No Token</span>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="token">Token</button>
+    <button class="tab-btn" data-tab="search">Search</button>
+    <button class="tab-btn" data-tab="results">Results</button>
+    <button class="tab-btn" data-tab="lists">Lists</button>
+  </div>
+
+  <!-- =============================== TOKEN TAB =============================== -->
+  <div id="tab-token" class="tab-panel active">
+    <div class="card">
+      <div class="card-title">POST /api/Token/Issue <span class="badge">Authentication</span></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Client ID</label>
+          <input type="text" id="tokenClientId" value="XGClient">
+        </div>
+        <div class="form-group">
+          <label>User ID</label>
+          <input type="text" id="tokenUserId" value="Admin1">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="tokenPassword" value="P@ssw0rd!">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnIssueToken">Issue Token</button>
+      </div>
+      <div class="mt-12">
+        <div class="pane-label">Response</div>
+        <div class="json-output" id="tokenResponse"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================== SEARCH TAB =============================== -->
+  <div id="tab-search" class="tab-panel">
+
+    <!-- Client Context -->
+    <div class="card">
+      <div class="card-title">Client Context</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Client ID</label>
+          <input type="text" id="searchClientId" value="XGClient">
+        </div>
+        <div class="form-group">
+          <label>User ID</label>
+          <input type="text" id="searchUserId" value="Admin1">
+        </div>
+        <div class="form-group">
+          <label>Client Reference</label>
+          <input type="text" id="searchClientRef" value="REF-2026-001" placeholder="Optional reference">
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration -->
+    <div class="card">
+      <div class="card-title">Configuration</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Predefined Search Name</label>
+          <select id="searchPredefined">
+            <option value="PaymentScreening">PaymentScreening</option>
+            <option value="FullDueDiligence">FullDueDiligence</option>
+            <option value="QuickScreen">QuickScreen</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Assign Result To</label>
+          <input type="text" id="searchAssignTo" value="ComplianceTeam" placeholder="Role or user">
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="searchWriteResults" checked>
+          <label for="searchWriteResults">Write Results to Database</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Records -->
+    <div class="card">
+      <div class="card-title">Input Records</div>
+      <div class="btn-row mb-16">
+        <button class="btn btn-primary btn-sm" id="btnAddEntity">+ Add Entity</button>
+        <span style="color:var(--text-secondary);font-size:12px;margin:0 8px;">Pre-fill samples:</span>
+        <button class="btn btn-outline btn-sm" data-prefill="clean">John Smith (Clean)</button>
+        <button class="btn btn-outline btn-sm" data-prefill="suspicious">Ahmad Trading (Suspicious)</button>
+        <button class="btn btn-outline btn-sm" data-prefill="match">Petromax Energy (Match)</button>
+      </div>
+      <div id="entityContainer"></div>
+    </div>
+
+    <!-- Execute -->
+    <div class="btn-row mb-16">
+      <button class="btn btn-success" id="btnExecuteSearch" style="padding:10px 32px;font-size:14px;">Execute Search</button>
+      <button class="btn btn-outline" id="btnClearSearch">Clear All</button>
+    </div>
+
+    <!-- Results Summary -->
+    <div id="searchSummary" class="hidden"></div>
+
+    <!-- Match Results -->
+    <div id="matchResults" class="hidden">
+      <div class="card">
+        <div class="card-title">Match Results</div>
+        <div id="matchContainer"></div>
+      </div>
+    </div>
+
+    <!-- Request / Response Split -->
+    <div class="split-pane">
+      <div>
+        <div class="pane-label">Request JSON</div>
+        <div class="json-output" id="searchRequest"></div>
+      </div>
+      <div>
+        <div class="pane-label">Response JSON</div>
+        <div class="json-output" id="searchResponse"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================== RESULTS TAB =============================== -->
+  <div id="tab-results" class="tab-panel">
+
+    <!-- Search Records -->
+    <div class="card">
+      <div class="card-title">Search Records <span class="badge">resultsSearchRecords</span></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Run ID</label>
+          <input type="number" id="resRunId" placeholder="e.g. 100001">
+        </div>
+        <div class="form-group">
+          <label>Alert State</label>
+          <select id="resAlertStateFilter">
+            <option value="">Any</option>
+            <option value="Open">Open</option>
+            <option value="Closed">Closed</option>
+          </select>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="resHasMatches">
+          <label for="resHasMatches">Has Matches Only</label>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnSearchRecords">Search Records</button>
+      </div>
+      <div class="mt-12">
+        <div class="pane-label">Response</div>
+        <div class="json-output" id="searchRecordsResponse"></div>
+      </div>
+    </div>
+
+    <!-- Single Record Lookup -->
+    <div class="card">
+      <div class="card-title">Single Record Lookup <span class="badge">resultsRecord</span></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Result ID</label>
+          <input type="number" id="resResultId" placeholder="e.g. 200001">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnGetRecord">Get Record</button>
+      </div>
+      <div class="mt-12">
+        <div class="pane-label">Response</div>
+        <div class="json-output" id="singleRecordResponse"></div>
+      </div>
+    </div>
+
+    <!-- Set Record State -->
+    <div class="card">
+      <div class="card-title">Set Record State <span class="badge">resultsSetRecordState</span></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Result ID</label>
+          <input type="number" id="stateResultId" placeholder="e.g. 200001">
+        </div>
+        <div class="form-group">
+          <label>Alert State</label>
+          <select id="stateAlertState">
+            <option value="Open">Open</option>
+            <option value="Closed">Closed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <input type="text" id="stateStatus" placeholder="e.g. Reviewed" value="Reviewed">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Note</label>
+        <textarea id="stateNote" placeholder="Add a review note..." rows="2"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnSetState">Set Record State</button>
+      </div>
+      <div class="mt-12">
+        <div class="pane-label">Response</div>
+        <div class="json-output" id="setStateResponse"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================== LISTS TAB =============================== -->
+  <div id="tab-lists" class="tab-panel">
+    <div class="card">
+      <div class="card-title">Screening Data Files <span class="badge">listsDataFiles</span></div>
+      <div class="btn-row mb-16">
+        <button class="btn btn-primary" id="btnLoadDataFiles">Load Data Files</button>
+      </div>
+      <div id="dataFilesTable" class="hidden">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Record Count</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody id="dataFilesBody"></tbody>
+        </table>
+      </div>
+      <div class="mt-12">
+        <div class="pane-label">Response JSON</div>
+        <div class="json-output" id="listsResponse"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script src="mock-bridger-server.js"></script>
+<script src="sample-data.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // --- State ---
+  let currentToken = null;
+  let entityCounter = 0;
+
+  // --- JSON Syntax Highlighter ---
+  function syntaxHighlight(json) {
+    if (typeof json !== 'string') {
+      json = JSON.stringify(json, null, 2);
+    }
+    // Escape HTML
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Wrap tokens with spans
+    return json.replace(
+      /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|\bnull\b)/g,
+      function(match) {
+        var cls = 'json-number';
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            cls = 'json-key';
+            // Remove trailing colon for wrapping, add it back outside
+            return '<span class="' + cls + '">' + match.slice(0, -1) + '</span>:';
+          } else {
+            cls = 'json-string';
+          }
+        } else if (/true|false/.test(match)) {
+          cls = 'json-boolean';
+        } else if (/null/.test(match)) {
+          cls = 'json-null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+      }
+    );
+  }
+
+  function showJson(el, data) {
+    if (typeof el === 'string') el = document.getElementById(el);
+    el.innerHTML = syntaxHighlight(data);
+  }
+
+  // --- Tab Switching ---
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // --- Token Status ---
+  function updateTokenStatus() {
+    var bar = document.getElementById('tokenStatusBar');
+    if (currentToken) {
+      bar.innerHTML = '<span class="token-status valid"><span class="dot"></span> Token Active</span>';
+    } else {
+      bar.innerHTML = '<span class="token-status invalid"><span class="dot"></span> No Token</span>';
+    }
+  }
+
+  // --- TOKEN TAB ---
+  document.getElementById('btnIssueToken').addEventListener('click', function() {
+    var clientId = document.getElementById('tokenClientId').value;
+    var userId = document.getElementById('tokenUserId').value;
+    var password = document.getElementById('tokenPassword').value;
+    var result = MockBridger.tokenIssue(clientId, userId, password);
+    if (result.access_token) {
+      currentToken = result.access_token;
+    }
+    updateTokenStatus();
+    showJson('tokenResponse', result);
+  });
+
+  // --- SEARCH TAB: Entity Management ---
+  var entityContainer = document.getElementById('entityContainer');
+
+  function createEntityRow(prefillData) {
+    entityCounter++;
+    var id = entityCounter;
+    var data = prefillData || {};
+
+    var row = document.createElement('div');
+    row.className = 'entity-row';
+    row.dataset.entityId = id;
+    row.innerHTML =
+      '<div class="entity-row-header">' +
+        '<span class="entity-row-title">Entity #' + id + '</span>' +
+        '<button class="btn btn-danger btn-sm btn-remove-entity">Remove</button>' +
+      '</div>' +
+      '<div class="form-grid">' +
+        '<div class="form-group">' +
+          '<label>Entity Type</label>' +
+          '<select class="ent-type">' +
+            '<option value="Individual"' + (data.entityType === 'Individual' ? ' selected' : '') + '>Individual</option>' +
+            '<option value="Business"' + (data.entityType === 'Business' ? ' selected' : '') + '>Business</option>' +
+            '<option value="Unknown"' + ((!data.entityType || data.entityType === 'Unknown') ? ' selected' : '') + '>Unknown</option>' +
+          '</select>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>First Name</label>' +
+          '<input type="text" class="ent-first" value="' + (data.first || '') + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Last Name</label>' +
+          '<input type="text" class="ent-last" value="' + (data.last || '') + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Full Name</label>' +
+          '<input type="text" class="ent-full" value="' + (data.full || '') + '">' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-grid">' +
+        '<div class="form-group">' +
+          '<label>Street</label>' +
+          '<input type="text" class="ent-street" value="' + (data.street || '') + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>City</label>' +
+          '<input type="text" class="ent-city" value="' + (data.city || '') + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Country</label>' +
+          '<input type="text" class="ent-country" value="' + (data.country || '') + '" placeholder="2-letter code">' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-grid">' +
+        '<div class="form-group">' +
+          '<label>ID Number</label>' +
+          '<input type="text" class="ent-idnum" value="' + (data.idNumber || '') + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>ID Type</label>' +
+          '<input type="text" class="ent-idtype" value="' + (data.idType || '') + '" placeholder="e.g. Passport, EIN">' +
+        '</div>' +
+      '</div>';
+
+    row.querySelector('.btn-remove-entity').addEventListener('click', function() {
+      row.remove();
+    });
+
+    entityContainer.appendChild(row);
+    return row;
+  }
+
+  document.getElementById('btnAddEntity').addEventListener('click', function() {
+    createEntityRow();
+  });
+
+  // Pre-fill buttons
+  var prefillSamples = {
+    clean: {
+      entityType: 'Individual',
+      first: 'John',
+      last: 'Smith',
+      full: '',
+      street: '10 Downing Street',
+      city: 'London',
+      country: 'GB',
+      idNumber: '',
+      idType: ''
+    },
+    suspicious: {
+      entityType: 'Business',
+      first: '',
+      last: '',
+      full: 'Ahmad Trading Corp',
+      street: '45 Commerce Road',
+      city: 'Dubai',
+      country: 'AE',
+      idNumber: '',
+      idType: ''
+    },
+    match: {
+      entityType: 'Business',
+      first: '',
+      last: '',
+      full: 'Petromax Energy Corp',
+      street: 'Av. Libertador 1234',
+      city: 'Caracas',
+      country: 'VE',
+      idNumber: '',
+      idType: ''
+    }
+  };
+
+  document.querySelectorAll('[data-prefill]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var key = btn.dataset.prefill;
+      createEntityRow(prefillSamples[key]);
+    });
+  });
+
+  // Build search request from form
+  function buildSearchRequest() {
+    var rows = entityContainer.querySelectorAll('.entity-row');
+    var records = [];
+    var recordId = 1;
+    rows.forEach(function(row) {
+      var entity = {
+        EntityType: row.querySelector('.ent-type').value,
+        Name: {},
+        Addresses: [],
+        IDs: []
+      };
+
+      var first = row.querySelector('.ent-first').value.trim();
+      var last = row.querySelector('.ent-last').value.trim();
+      var full = row.querySelector('.ent-full').value.trim();
+
+      if (full) entity.Name.Full = full;
+      if (first) entity.Name.First = first;
+      if (last) entity.Name.Last = last;
+
+      var street = row.querySelector('.ent-street').value.trim();
+      var city = row.querySelector('.ent-city').value.trim();
+      var country = row.querySelector('.ent-country').value.trim();
+      if (street || city || country) {
+        entity.Addresses.push({
+          Street1: street,
+          City: city,
+          Country: country,
+          Type: 'Current'
+        });
+      }
+
+      var idNum = row.querySelector('.ent-idnum').value.trim();
+      var idType = row.querySelector('.ent-idtype').value.trim();
+      if (idNum) {
+        entity.IDs.push({ Number: idNum, Type: idType || 'Unknown' });
+      }
+
+      records.push({ RecordID: recordId++, Entity: entity });
+    });
+
+    return {
+      EntitySearchRequest: {
+        ClientContext: {
+          ClientID: document.getElementById('searchClientId').value,
+          UserID: document.getElementById('searchUserId').value,
+          ClientReference: document.getElementById('searchClientRef').value
+        },
+        Configuration: {
+          PredefinedSearchName: document.getElementById('searchPredefined').value,
+          WriteResultsToDatabase: document.getElementById('searchWriteResults').checked,
+          AssignResultTo: {
+            Type: 'Role',
+            RolesOrUsers: [document.getElementById('searchAssignTo').value]
+          }
+        },
+        Input: {
+          Records: records
+        }
+      }
+    };
+  }
+
+  // Execute Search
+  document.getElementById('btnExecuteSearch').addEventListener('click', function() {
+    var request = buildSearchRequest();
+    if (request.EntitySearchRequest.Input.Records.length === 0) {
+      alert('Add at least one entity before searching.');
+      return;
+    }
+
+    showJson('searchRequest', request);
+    var response = MockBridger.listsSearch(request);
+    showJson('searchResponse', response);
+
+    // Summary
+    var recs = response.SearchResults.Records;
+    var total = recs.length;
+    var matchCount = recs.filter(function(r) { return r.HasScreeningListMatches; }).length;
+    var summaryEl = document.getElementById('searchSummary');
+    summaryEl.classList.remove('hidden');
+    summaryEl.innerHTML =
+      '<div class="summary-banner ' + (matchCount > 0 ? 'alert' : 'clean') + '">' +
+        '<div class="stat"><span class="stat-number">' + total + '</span> records screened</div>' +
+        '<div class="stat"><span class="stat-number">' + matchCount + '</span> matches found</div>' +
+      '</div>';
+
+    // Match results
+    var matchContainer = document.getElementById('matchContainer');
+    var matchSection = document.getElementById('matchResults');
+    matchContainer.innerHTML = '';
+
+    if (matchCount > 0) {
+      matchSection.classList.remove('hidden');
+      recs.forEach(function(rec) {
+        if (!rec.HasScreeningListMatches) return;
+        var inputName = rec._meta ? rec._meta.inputName : 'Unknown';
+        rec.WatchlistResults.forEach(function(wl) {
+          var card = document.createElement('div');
+          card.className = 'match-card';
+          card.innerHTML =
+            '<div class="match-header">' +
+              '<div class="match-name">' + escapeHtml(wl.BestName) + '</div>' +
+              '<div class="match-score">' + wl.EntityScore + '%</div>' +
+            '</div>' +
+            '<div class="match-details">' +
+              '<span>Input: <strong>' + escapeHtml(inputName) + '</strong></span>' +
+              '<span>List: <strong>' + escapeHtml(wl.File.Name) + '</strong></span>' +
+              '<span>Type: ' + escapeHtml(wl.EntityType) + '</span>' +
+            '</div>' +
+            '<div class="match-expand">' +
+              '<div class="match-details">' +
+                '<div><strong>Reason Listed:</strong> ' + escapeHtml(wl.ReasonListed) + '</div>' +
+                '<div><strong>Date Listed:</strong> ' + escapeHtml(wl.DateListed) + '</div>' +
+                '<div><strong>Country:</strong> ' + escapeHtml(wl.Country) + '</div>' +
+                '<div><strong>Watchlist Entry ID:</strong> ' + escapeHtml(wl.WatchlistEntryId) + '</div>' +
+                '<div><strong>Best Name Score:</strong> ' + wl.BestNameScore + '%</div>' +
+                '<div><strong>Result ID:</strong> ' + rec.ResultID + '</div>' +
+              '</div>' +
+            '</div>';
+          card.addEventListener('click', function() {
+            card.classList.toggle('expanded');
+          });
+          matchContainer.appendChild(card);
+        });
+      });
+    } else {
+      matchSection.classList.add('hidden');
+    }
+  });
+
+  // Clear Search
+  document.getElementById('btnClearSearch').addEventListener('click', function() {
+    entityContainer.innerHTML = '';
+    entityCounter = 0;
+    document.getElementById('searchRequest').innerHTML = '';
+    document.getElementById('searchResponse').innerHTML = '';
+    document.getElementById('searchSummary').classList.add('hidden');
+    document.getElementById('searchSummary').innerHTML = '';
+    document.getElementById('matchResults').classList.add('hidden');
+    document.getElementById('matchContainer').innerHTML = '';
+  });
+
+  // --- RESULTS TAB ---
+  document.getElementById('btnSearchRecords').addEventListener('click', function() {
+    var criteria = {};
+    var runId = document.getElementById('resRunId').value.trim();
+    if (runId) criteria.RunID = parseInt(runId, 10);
+    var alertState = document.getElementById('resAlertStateFilter').value;
+    if (alertState) criteria.AlertState = alertState;
+    if (document.getElementById('resHasMatches').checked) {
+      criteria.HasMatches = true;
+    }
+    var result = MockBridger.resultsSearchRecords(Object.keys(criteria).length > 0 ? criteria : undefined);
+    showJson('searchRecordsResponse', result);
+  });
+
+  document.getElementById('btnGetRecord').addEventListener('click', function() {
+    var id = document.getElementById('resResultId').value.trim();
+    if (!id) { alert('Enter a Result ID'); return; }
+    var result = MockBridger.resultsRecord(parseInt(id, 10));
+    showJson('singleRecordResponse', result);
+  });
+
+  document.getElementById('btnSetState').addEventListener('click', function() {
+    var id = document.getElementById('stateResultId').value.trim();
+    if (!id) { alert('Enter a Result ID'); return; }
+    var newState = {
+      AlertState: document.getElementById('stateAlertState').value,
+      Status: document.getElementById('stateStatus').value.trim(),
+      Note: document.getElementById('stateNote').value.trim()
+    };
+    var result = MockBridger.resultsSetRecordState(parseInt(id, 10), newState);
+    showJson('setStateResponse', result);
+  });
+
+  // --- LISTS TAB ---
+  document.getElementById('btnLoadDataFiles').addEventListener('click', function() {
+    var result = MockBridger.listsDataFiles();
+    showJson('listsResponse', result);
+
+    var tbody = document.getElementById('dataFilesBody');
+    tbody.innerHTML = '';
+    result.DataFiles.forEach(function(f) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><code>' + escapeHtml(f.ID) + '</code></td>' +
+        '<td>' + escapeHtml(f.Name) + '</td>' +
+        '<td><span class="badge" style="background:#e8effc;color:#1a56db;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">' + escapeHtml(f.Type) + '</span></td>' +
+        '<td>' + f.RecordCount.toLocaleString() + '</td>' +
+        '<td>' + formatDate(f.LastUpdated) + '</td>';
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('dataFilesTable').classList.remove('hidden');
+  });
+
+  // --- Utility ---
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function formatDate(isoStr) {
+    if (!isoStr) return '';
+    try {
+      var d = new Date(isoStr);
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) +
+        ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return isoStr;
+    }
+  }
+
+})();
+</script>
+</body>
+</html>
