@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pain.001 Parser - Bridger POC</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #1a56db;
+    --primary-light: #e1effe;
+    --success: #059669;
+    --success-light: #d1fae5;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* --- Top Nav --- */
+  .top-nav {
+    background: var(--text);
+    color: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .top-nav .brand {
+    font-size: 18px;
+    font-weight: 700;
+    margin-right: 40px;
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+  }
+
+  .top-nav .brand span {
+    color: #93c5fd;
+  }
+
+  .top-nav nav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .top-nav nav a {
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .top-nav nav a:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+  }
+
+  .top-nav nav a.active {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  /* --- Layout --- */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin-bottom: 28px;
+  }
+
+  /* --- Cards --- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .card-badge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .badge-blue {
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  .badge-green {
+    background: var(--success-light);
+    color: var(--success);
+  }
+
+  .badge-amber {
+    background: var(--warning-light);
+    color: var(--warning);
+  }
+
+  .badge-red {
+    background: var(--danger-light);
+    color: var(--danger);
+  }
+
+  /* --- Meta grid inside cards --- */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .meta-item label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+  }
+
+  .meta-item span {
+    font-size: 14px;
+    font-weight: 500;
+    word-break: break-all;
+  }
+
+  /* --- Tables --- */
+  .table-wrapper {
+    overflow-x: auto;
+    margin-top: 12px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: #f1f5f9;
+  }
+
+  .amount-cell {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .iban-cell {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    word-break: break-all;
+  }
+
+  /* --- Pill (for party types) --- */
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .pill-debtor {
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  .pill-creditor {
+    background: var(--success-light);
+    color: var(--success);
+  }
+
+  .pill-ultimate {
+    background: var(--warning-light);
+    color: var(--warning);
+  }
+
+  /* --- Form Elements --- */
+  .input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  textarea {
+    width: 100%;
+    height: 220px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    resize: vertical;
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.12);
+  }
+
+  textarea.drag-over {
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  select, .file-label {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  select:focus, .file-label:hover {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  .file-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .file-label input[type="file"] {
+    position: absolute;
+    left: -9999px;
+    opacity: 0;
+  }
+
+  .btn {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: #1e40af;
+  }
+
+  .btn-primary:disabled {
+    background: #93c5fd;
+    cursor: not-allowed;
+  }
+
+  .btn-success {
+    background: var(--success);
+    color: #fff;
+  }
+
+  .btn-success:hover {
+    background: #047857;
+  }
+
+  .btn-outline {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-outline:hover {
+    background: #f1f5f9;
+  }
+
+  .toolbar-spacer {
+    flex: 1;
+  }
+
+  /* --- Error / Alert --- */
+  .alert {
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+  }
+
+  .alert-error {
+    background: var(--danger-light);
+    color: var(--danger);
+    border: 1px solid #fca5a5;
+  }
+
+  .alert-success {
+    background: var(--success-light);
+    color: var(--success);
+    border: 1px solid #6ee7b7;
+  }
+
+  /* --- Screening button bar --- */
+  .action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .action-bar .summary-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .action-bar .summary-text strong {
+    color: var(--text);
+  }
+
+  /* --- Empty / Placeholder State --- */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text-secondary);
+  }
+
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.3;
+  }
+
+  .empty-state h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .empty-state p {
+    font-size: 14px;
+  }
+
+  /* --- Batch separator --- */
+  .batch-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 4px;
+  }
+
+  .batch-divider::before,
+  .batch-divider::after {
+    content: '';
+    flex: 1;
+    border-top: 1px dashed var(--border);
+  }
+
+  .batch-divider span {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  /* --- Responsive --- */
+  @media (max-width: 768px) {
+    .top-nav { padding: 0 12px; }
+    .top-nav .brand { margin-right: 16px; font-size: 16px; }
+    .top-nav nav a { font-size: 12px; padding: 4px 8px; }
+    .container { padding: 20px 12px 48px; }
+    .meta-grid { grid-template-columns: 1fr 1fr; }
+    textarea { height: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<div class="top-nav">
+  <div class="brand">Bridger <span>POC</span></div>
+  <nav>
+    <a href="01-pain001-parser.html" class="active">01 pain.001 Parser</a>
+    <a href="02-api-explorer.html">02 API Explorer</a>
+    <a href="03-screening-flow.html">03 Screening Flow</a>
+    <a href="04-webhook-simulator.html">04 Webhook Simulator</a>
+    <a href="05-compliance-dashboard.html">05 Compliance Dashboard</a>
+  </nav>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+  <h1 class="page-title">ISO 20022 pain.001 Parser</h1>
+  <p class="page-subtitle">Paste or upload a pain.001.001.03 Customer Credit Transfer Initiation XML file to parse and inspect its contents.</p>
+
+  <!-- Input Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">XML Input</div>
+    </div>
+
+    <div class="input-section">
+      <div class="toolbar">
+        <select id="sampleSelect">
+          <option value="">-- Load Sample --</option>
+          <option value="simple">Simple (3 clean payments)</option>
+          <option value="mixed">Mixed (2 clean + 3 suspicious)</option>
+          <option value="batch">Batch (8 payments, multi-block)</option>
+        </select>
+
+        <label class="file-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload File
+          <input type="file" id="fileInput" accept=".xml,.XML,text/xml,application/xml">
+        </label>
+
+        <div class="toolbar-spacer"></div>
+
+        <button class="btn btn-outline" id="clearBtn">Clear</button>
+        <button class="btn btn-primary" id="parseBtn">Parse XML</button>
+      </div>
+
+      <textarea id="xmlInput" placeholder="Paste pain.001.001.03 XML here, or drag and drop a file..."
+                spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <!-- Error Display -->
+  <div class="alert alert-error" id="errorAlert"></div>
+
+  <!-- Results Container -->
+  <div id="results"></div>
+</div>
+
+<!-- Shared Libraries -->
+<script src="mock-bridger-server.js"></script>
+<script src="sample-data.js"></script>
+
+<!-- Application Logic -->
+<script>
+(function() {
+  'use strict';
+
+  // --- DOM refs ---
+  const xmlInput = document.getElementById('xmlInput');
+  const sampleSelect = document.getElementById('sampleSelect');
+  const fileInput = document.getElementById('fileInput');
+  const parseBtn = document.getElementById('parseBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const errorAlert = document.getElementById('errorAlert');
+  const resultsContainer = document.getElementById('results');
+
+  // --- State ---
+  let currentParsed = null;
+
+  // --- Sample loading ---
+  sampleSelect.addEventListener('change', function() {
+    const key = this.value;
+    if (key && SampleData.SAMPLES[key]) {
+      xmlInput.value = SampleData.SAMPLES[key].xml;
+      this.value = '';
+      hideError();
+    }
+  });
+
+  // --- File upload ---
+  fileInput.addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    readFile(file);
+    this.value = '';
+  });
+
+  function readFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      xmlInput.value = e.target.result;
+      hideError();
+    };
+    reader.onerror = function() {
+      showError('Failed to read file.');
+    };
+    reader.readAsText(file);
+  }
+
+  // --- Drag and drop ---
+  xmlInput.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.add('drag-over');
+  });
+
+  xmlInput.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.remove('drag-over');
+  });
+
+  xmlInput.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      readFile(file);
+    }
+  });
+
+  // --- Clear ---
+  clearBtn.addEventListener('click', function() {
+    xmlInput.value = '';
+    resultsContainer.innerHTML = '';
+    currentParsed = null;
+    hideError();
+  });
+
+  // --- Parse ---
+  parseBtn.addEventListener('click', function() {
+    const xml = xmlInput.value.trim();
+    if (!xml) {
+      showError('Please paste or load XML content before parsing.');
+      return;
+    }
+
+    try {
+      currentParsed = SampleData.parsePain001(xml);
+      hideError();
+      renderResults(currentParsed);
+    } catch (err) {
+      showError(err.message);
+      resultsContainer.innerHTML = '';
+      currentParsed = null;
+    }
+  });
+
+  // --- Error helpers ---
+  function showError(msg) {
+    errorAlert.textContent = msg;
+    errorAlert.style.display = 'block';
+  }
+
+  function hideError() {
+    errorAlert.style.display = 'none';
+  }
+
+  // --- Escape HTML ---
+  function esc(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // --- Format address ---
+  function formatAddress(addr) {
+    if (!addr) return '';
+    return [addr.street, addr.city, addr.postCode, addr.country].filter(Boolean).join(', ');
+  }
+
+  // --- Format number with commas ---
+  function formatAmount(val) {
+    if (!val) return '';
+    const num = parseFloat(val);
+    if (isNaN(num)) return esc(val);
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // --- Party type to pill class ---
+  function partyPillClass(type) {
+    if (type === 'Debtor') return 'pill-debtor';
+    if (type === 'Creditor') return 'pill-creditor';
+    return 'pill-ultimate';
+  }
+
+  // --- Render Results ---
+  function renderResults(parsed) {
+    let html = '';
+
+    // Group Header
+    html += renderGroupHeader(parsed.header);
+
+    // Batches
+    parsed.batches.forEach(function(batch, idx) {
+      html += renderBatch(batch, idx, parsed.batches.length);
+    });
+
+    // Screenable Parties summary
+    html += renderParties(parsed.allParties);
+
+    // Action bar
+    html += renderActionBar(parsed);
+
+    resultsContainer.innerHTML = html;
+
+    // Bind send-to-screening button
+    var sendBtn = document.getElementById('sendToScreening');
+    if (sendBtn) {
+      sendBtn.addEventListener('click', function() {
+        sessionStorage.setItem('bridger-poc-parsed', JSON.stringify(currentParsed));
+        window.open('03-screening-flow.html', '_blank');
+      });
+    }
+  }
+
+  // --- Group Header Card ---
+  function renderGroupHeader(header) {
+    return '<div class="card">' +
+      '<div class="card-header">' +
+        '<div class="card-title">Group Header</div>' +
+        '<span class="card-badge badge-blue">pain.001.001.03</span>' +
+      '</div>' +
+      '<div class="meta-grid">' +
+        metaItem('Message ID', header.msgId) +
+        metaItem('Creation Date/Time', header.creDtTm) +
+        metaItem('Number of Transactions', header.nbOfTxs) +
+        metaItem('Control Sum', formatAmount(header.ctrlSum)) +
+        metaItem('Initiating Party', header.initgPty) +
+      '</div>' +
+    '</div>';
+  }
+
+  function metaItem(label, value) {
+    return '<div class="meta-item">' +
+      '<label>' + esc(label) + '</label>' +
+      '<span>' + esc(String(value || '-')) + '</span>' +
+    '</div>';
+  }
+
+  // --- Batch Card ---
+  function renderBatch(batch, idx, total) {
+    var batchLabel = 'Payment Batch ' + (idx + 1) + ' of ' + total;
+    var pmtMethods = { TRF: 'Transfer', CHK: 'Cheque', DD: 'Direct Debit' };
+    var methodLabel = pmtMethods[batch.pmtMtd] || batch.pmtMtd;
+
+    var html = '<div class="card">' +
+      '<div class="card-header">' +
+        '<div class="card-title">' + esc(batchLabel) +
+        ' &mdash; <span style="color:var(--text-secondary);font-weight:500">' + esc(batch.pmtInfId) + '</span></div>' +
+        '<span class="card-badge badge-blue">' + esc(methodLabel) + '</span>' +
+      '</div>' +
+      '<div class="meta-grid" style="margin-bottom:16px">' +
+        metaItem('Debtor', batch.debtor.name) +
+        metaItem('Debtor Address', formatAddress(batch.debtor.address)) +
+        metaItem('Debtor Account', batch.debtorAccount) +
+        metaItem('Debtor Agent (BIC)', batch.debtorAgent) +
+        metaItem('Execution Date', batch.reqdExctnDt) +
+        metaItem('Transactions / Control Sum', batch.nbOfTxs + ' / ' + formatAmount(batch.ctrlSum)) +
+      '</div>';
+
+    // Transactions table
+    html += '<div class="table-wrapper"><table>' +
+      '<thead><tr>' +
+        '<th>End-to-End ID</th>' +
+        '<th>Creditor</th>' +
+        '<th>Country</th>' +
+        '<th style="text-align:right">Amount</th>' +
+        '<th>Creditor IBAN</th>' +
+        '<th>Remittance Info</th>' +
+      '</tr></thead><tbody>';
+
+    batch.transactions.forEach(function(txn) {
+      var creditorName = esc(txn.creditor.name);
+      if (txn.ultimateCreditor && txn.ultimateCreditor.name) {
+        creditorName += '<br><span style="font-size:11px;color:var(--warning)">Ult: ' +
+          esc(txn.ultimateCreditor.name) + '</span>';
+      }
+      html += '<tr>' +
+        '<td style="font-family:monospace;font-size:12px">' + esc(txn.endToEndId) + '</td>' +
+        '<td>' + creditorName + '</td>' +
+        '<td>' + esc(txn.creditor.address.country || '-') + '</td>' +
+        '<td class="amount-cell" style="text-align:right">' +
+          esc(txn.currency) + ' ' + formatAmount(txn.amount) + '</td>' +
+        '<td class="iban-cell">' + esc(txn.creditorAccount) + '</td>' +
+        '<td style="max-width:220px">' + esc(txn.remittanceInfo) + '</td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table></div></div>';
+    return html;
+  }
+
+  // --- Screenable Parties Table ---
+  function renderParties(parties) {
+    if (!parties || parties.length === 0) return '';
+
+    var html = '<div class="card">' +
+      '<div class="card-header">' +
+        '<div class="card-title">Screenable Parties</div>' +
+        '<span class="card-badge badge-green">' + parties.length + ' entities</span>' +
+      '</div>' +
+      '<div class="table-wrapper"><table>' +
+      '<thead><tr>' +
+        '<th>Type</th>' +
+        '<th>Name</th>' +
+        '<th>Country</th>' +
+        '<th>Source Reference</th>' +
+      '</tr></thead><tbody>';
+
+    parties.forEach(function(p) {
+      var pillClass = partyPillClass(p.type);
+      html += '<tr>' +
+        '<td><span class="pill ' + pillClass + '">' + esc(p.type) + '</span></td>' +
+        '<td style="font-weight:500">' + esc(p.name) + '</td>' +
+        '<td>' + esc(p.address.country || p.address.city || '-') + '</td>' +
+        '<td style="font-family:monospace;font-size:12px">' + esc(p.source) + '</td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table></div></div>';
+    return html;
+  }
+
+  // --- Action Bar ---
+  function renderActionBar(parsed) {
+    var totalTxns = 0;
+    parsed.batches.forEach(function(b) { totalTxns += b.transactions.length; });
+    var partyCount = parsed.allParties.length;
+
+    return '<div class="action-bar">' +
+      '<div class="summary-text">' +
+        'Parsed <strong>' + totalTxns + ' transaction' + (totalTxns !== 1 ? 's' : '') + '</strong> across ' +
+        '<strong>' + parsed.batches.length + ' batch' + (parsed.batches.length !== 1 ? 'es' : '') + '</strong> with ' +
+        '<strong>' + partyCount + ' screenable ' + (partyCount !== 1 ? 'parties' : 'party') + '</strong>.' +
+      '</div>' +
+      '<button class="btn btn-success" id="sendToScreening">' +
+        'Send to Screening &#8594;' +
+      '</button>' +
+    '</div>';
+  }
+
+})();
+</script>
+
+</body>
+</html>

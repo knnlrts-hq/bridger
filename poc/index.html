@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bridger XG5 POC — Payment Factory Screening Demo</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #f8fafc;
+  color: #1e293b;
+  line-height: 1.6;
+}
+.nav {
+  background: #1e293b;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  gap: 2rem;
+}
+.nav-brand {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+.nav-brand span { color: #60a5fa; }
+.nav a { color: #94a3b8; text-decoration: none; font-size: 0.875rem; transition: color 0.15s; }
+.nav a:hover, .nav a.active { color: #fff; }
+.hero {
+  background: linear-gradient(135deg, #1e293b 0%, #1a56db 100%);
+  color: #fff;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+.hero h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1rem; }
+.hero p { font-size: 1.15rem; color: #cbd5e1; max-width: 700px; margin: 0 auto 0.5rem; }
+.hero .subtitle { font-size: 0.95rem; color: #94a3b8; margin-top: 1.5rem; }
+.hero code { background: rgba(255,255,255,0.12); padding: 0.15em 0.5em; border-radius: 4px; font-size: 0.9em; }
+.container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+.section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: #1e293b; }
+.tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+.tool-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.75rem;
+  transition: box-shadow 0.2s, transform 0.15s;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  position: relative;
+  overflow: hidden;
+}
+.tool-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+}
+.tool-card:nth-child(1)::before { background: #1a56db; }
+.tool-card:nth-child(2)::before { background: #7c3aed; }
+.tool-card:nth-child(3)::before { background: #059669; }
+.tool-card:nth-child(4)::before { background: #d97706; }
+.tool-card:nth-child(5)::before { background: #dc2626; }
+.tool-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+.tool-card:nth-child(1) .tool-number { background: #1a56db; }
+.tool-card:nth-child(2) .tool-number { background: #7c3aed; }
+.tool-card:nth-child(3) .tool-number { background: #059669; }
+.tool-card:nth-child(4) .tool-number { background: #d97706; }
+.tool-card:nth-child(5) .tool-number { background: #dc2626; }
+.tool-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+.tool-card p { font-size: 0.9rem; color: #64748b; line-height: 1.5; }
+.tool-card .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+.tag {
+  font-size: 0.75rem;
+  padding: 0.2em 0.6em;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 500;
+}
+.flow-section { margin-bottom: 3rem; }
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+}
+.flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1rem;
+}
+.flow-step .icon {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: #1a56db;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.flow-step .label { font-size: 0.85rem; font-weight: 600; color: #1e293b; }
+.flow-step .sublabel { font-size: 0.75rem; color: #64748b; }
+.flow-arrow { font-size: 1.5rem; color: #94a3b8; margin: 0 0.25rem; padding-top: 0; }
+.arch-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; margin-bottom: 3rem; }
+.arch-section h3 { margin-bottom: 1rem; }
+.arch-section pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 1.25rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+.footer { text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.85rem; border-top: 1px solid #e2e8f0; }
+.footer a { color: #1a56db; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="nav-brand"><span>Bridger</span> POC</a>
+  <a href="01-pain001-parser.html">Parser</a>
+  <a href="02-api-explorer.html">API Explorer</a>
+  <a href="03-screening-flow.html">Screening</a>
+  <a href="04-webhook-simulator.html">Webhooks</a>
+  <a href="05-compliance-dashboard.html">Compliance</a>
+</nav>
+
+<div class="hero">
+  <h1>Bridger XG5 Integration POC</h1>
+  <p>End-to-end demo of LexisNexis Bridger Insight XG5 sanctions screening integrated with a corporate payment factory processing <code>pain.001.001.03</code> files.</p>
+  <p class="subtitle">All Bridger API endpoints and webhooks are mocked in-browser. No backend required.</p>
+</div>
+
+<div class="container">
+
+  <h2 class="section-title">Demo Tools</h2>
+  <div class="tools-grid">
+
+    <a href="01-pain001-parser.html" class="tool-card">
+      <div class="tool-number">1</div>
+      <h3>pain.001 Parser & Viewer</h3>
+      <p>Upload or paste ISO 20022 pain.001.001.03 XML. Parse and visualize payment instructions with all screenable parties extracted and highlighted.</p>
+      <div class="tags">
+        <span class="tag">ISO 20022</span>
+        <span class="tag">XML Parsing</span>
+        <span class="tag">Party Extraction</span>
+      </div>
+    </a>
+
+    <a href="02-api-explorer.html" class="tool-card">
+      <div class="tool-number">2</div>
+      <h3>Bridger API Explorer</h3>
+      <p>Interactively construct and fire requests against the mock Bridger XG5 REST API. Explore Token, Search, Results, and ListMaintenance interfaces.</p>
+      <div class="tags">
+        <span class="tag">REST API</span>
+        <span class="tag">Token/JWT</span>
+        <span class="tag">Lists/Search</span>
+        <span class="tag">Results</span>
+      </div>
+    </a>
+
+    <a href="03-screening-flow.html" class="tool-card">
+      <div class="tool-number">3</div>
+      <h3>Screening Flow Simulator</h3>
+      <p>The main event. Load a pain.001 file, watch the full pipeline: parse, authenticate, screen, apply thresholds, assign Trax statuses. Animated end-to-end.</p>
+      <div class="tags">
+        <span class="tag">E2E Pipeline</span>
+        <span class="tag">Thresholds</span>
+        <span class="tag">Trax Statuses</span>
+      </div>
+    </a>
+
+    <a href="04-webhook-simulator.html" class="tool-card">
+      <div class="tool-number">4</div>
+      <h3>Webhook Simulator</h3>
+      <p>Two-panel view: sign webhooks on the Bridger side, verify on the Bank Connector side. Step-by-step HMAC-SHA256 computation. Tamper mode to prove integrity.</p>
+      <div class="tags">
+        <span class="tag">HMAC-SHA256</span>
+        <span class="tag">AlertStateClosed</span>
+        <span class="tag">AlertDecisionApplied</span>
+      </div>
+    </a>
+
+    <a href="05-compliance-dashboard.html" class="tool-card">
+      <div class="tool-number">5</div>
+      <h3>Compliance Review Dashboard</h3>
+      <p>Compliance officer workflow. Review SUSPECT alerts, compare payment parties against watchlist matches, make accept/reject/escalate decisions. Full audit trail.</p>
+      <div class="tags">
+        <span class="tag">Alert Review</span>
+        <span class="tag">Decisions</span>
+        <span class="tag">Audit Trail</span>
+        <span class="tag">Webhooks</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="flow-section">
+    <h2 class="section-title">Demo Flow</h2>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="icon">1</div>
+        <div class="label">Parse pain.001</div>
+        <div class="sublabel">Extract parties</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="icon">2</div>
+        <div class="label">Explore API</div>
+        <div class="sublabel">Learn endpoints</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="icon">3</div>
+        <div class="label">Run Screening</div>
+        <div class="sublabel">E2E pipeline</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="icon">4</div>
+        <div class="label">Verify Webhooks</div>
+        <div class="sublabel">HMAC signing</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="icon">5</div>
+        <div class="label">Review Alerts</div>
+        <div class="sublabel">Make decisions</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-section">
+    <h3>Architecture</h3>
+    <pre>
+ERP / Payment Factory          Bank Connector              Bridger XG5 (Mocked)
+       |                            |                            |
+  pain.001.001.03 ──────────► Parse & Extract ──────────► Token/Issue
+       |                      Parties             ──────► Lists/Search
+       |                            |              ◄────── SearchResults
+       |                     Apply Thresholds               |
+       |                            |                       |
+  Trax Status ◄──────────── EXTERNAL_ACCEPTED        Webhook Events
+  (ACCEPTED/                 EXTERNAL_REJECTED     ──► AlertStateClosed
+   REJECTED/                 EXTERNAL_SUSPECT      ──► AlertDecisionApplied
+   SUSPECT)                         |                       |
+       |                     Compliance Review    ◄── HMAC-SHA256 Signed
+       |                     Dashboard                      |
+       ◄──────────────────── Final Decision ────────────────┘
+    </pre>
+  </div>
+</div>
+
+<div class="footer">
+  Bridger XG5 Integration POC &mdash; All API interactions are mocked in-browser. No real screening data or external services.
+  <br>Built for demonstration purposes. See <a href="https://github.com/knnlrts-hq/bridger">repository</a> for documentation.
+</div>
+
+</body>
+</html>

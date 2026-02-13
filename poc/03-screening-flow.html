@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Screening Flow - Bridger XG5 POC</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #1a56db;
+    --primary-light: #dbeafe;
+    --primary-dark: #1e40af;
+    --success: #059669;
+    --success-light: #d1fae5;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* --- Nav --- */
+  .nav {
+    background: var(--primary);
+    color: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-brand {
+    font-weight: 700;
+    font-size: 18px;
+    margin-right: 32px;
+    white-space: nowrap;
+    letter-spacing: -0.3px;
+  }
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    overflow-x: auto;
+  }
+  .nav-links a {
+    color: rgba(255,255,255,.75);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background .15s, color .15s;
+  }
+  .nav-links a:hover { background: rgba(255,255,255,.12); color: #fff; }
+  .nav-links a.active { background: rgba(255,255,255,.2); color: #fff; }
+
+  /* --- Layout --- */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  /* --- Card --- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .icon {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  /* --- Input section --- */
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+  }
+  @media (max-width: 768px) {
+    .input-row { grid-template-columns: 1fr; }
+  }
+  .xml-input-area {
+    width: 100%;
+    height: 160px;
+    font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    resize: vertical;
+    background: #f9fafb;
+    color: var(--text);
+    transition: border-color .15s;
+  }
+  .xml-input-area:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,86,219,.12);
+  }
+  .xml-input-area::placeholder { color: var(--text-muted); }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* --- Buttons --- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: background .15s, transform .1s, box-shadow .15s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--primary-dark); box-shadow: 0 2px 8px rgba(26,86,219,.3); }
+  .btn-secondary {
+    background: #f1f5f9;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover:not(:disabled) { background: #e2e8f0; }
+  .btn-success {
+    background: var(--success);
+    color: #fff;
+  }
+  .btn-success:hover:not(:disabled) { background: #047857; }
+  .btn-warning {
+    background: var(--warning);
+    color: #fff;
+  }
+  .btn-warning:hover:not(:disabled) { background: #b45309; }
+  .btn-lg {
+    padding: 12px 28px;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+
+  select, input[type="number"] {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: var(--font);
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color .15s;
+  }
+  select:focus, input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,86,219,.12);
+  }
+  input[type="number"] { width: 70px; text-align: center; }
+
+  .file-upload-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px dashed var(--border);
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .file-upload-label:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+  }
+  .file-upload-input { display: none; }
+
+  /* --- Threshold config --- */
+  .threshold-config {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .threshold-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .threshold-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    min-width: 130px;
+  }
+  .threshold-info {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 4px 10px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .threshold-visual {
+    margin-top: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, var(--success) 0%, var(--success) 30%, var(--warning) 30%, var(--warning) 70%, var(--danger) 70%, var(--danger) 100%);
+    position: relative;
+  }
+
+  /* --- Pipeline --- */
+  .pipeline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    padding: 16px 0 8px;
+    overflow-x: auto;
+  }
+  .pipeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    min-width: 140px;
+  }
+  .pipeline-node {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    border: 3px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    transition: all .4s ease;
+    position: relative;
+  }
+  .pipeline-node.active {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 0 0 6px rgba(26,86,219,.1);
+    animation: pulse-node 1.2s ease-in-out infinite;
+  }
+  .pipeline-node.done {
+    border-color: var(--success);
+    color: #fff;
+    background: var(--success);
+    box-shadow: 0 0 0 6px rgba(5,150,105,.1);
+    animation: none;
+  }
+  .pipeline-node.error {
+    border-color: var(--danger);
+    color: #fff;
+    background: var(--danger);
+    animation: none;
+  }
+
+  @keyframes pulse-node {
+    0%, 100% { box-shadow: 0 0 0 6px rgba(26,86,219,.1); }
+    50% { box-shadow: 0 0 0 12px rgba(26,86,219,.05); }
+  }
+
+  .pipeline-label {
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    transition: color .3s;
+  }
+  .pipeline-step.active .pipeline-label { color: var(--primary); }
+  .pipeline-step.done .pipeline-label { color: var(--success); }
+
+  .pipeline-status {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    min-height: 16px;
+    transition: color .3s;
+    max-width: 150px;
+  }
+  .pipeline-step.done .pipeline-status { color: var(--success); }
+  .pipeline-step.active .pipeline-status { color: var(--primary); }
+
+  .pipeline-connector {
+    width: 48px;
+    height: 3px;
+    background: var(--border);
+    margin-top: 28px;
+    flex-shrink: 0;
+    position: relative;
+    border-radius: 2px;
+    overflow: hidden;
+    transition: background .4s;
+  }
+  .pipeline-connector.done {
+    background: var(--success);
+  }
+  .pipeline-connector.active {
+    background: var(--border);
+  }
+  .pipeline-connector.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 40%;
+    background: var(--primary);
+    border-radius: 2px;
+    animation: connector-flow .8s ease-in-out infinite;
+  }
+  @keyframes connector-flow {
+    0% { left: -40%; }
+    100% { left: 100%; }
+  }
+
+  .spinner-ring {
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--primary);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .run-btn-row {
+    text-align: center;
+    margin: 8px 0 0;
+  }
+
+  /* --- Results --- */
+  .summary-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .summary-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .summary-badge.accepted { background: var(--success-light); color: var(--success); }
+  .summary-badge.rejected { background: var(--danger-light); color: var(--danger); }
+  .summary-badge.suspect { background: var(--warning-light); color: var(--warning); }
+
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .results-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-secondary);
+    background: #f8fafc;
+    border-bottom: 2px solid var(--border);
+  }
+  .results-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .results-table tbody tr {
+    cursor: pointer;
+    transition: background .12s;
+  }
+  .results-table tbody tr:hover { background: #f8fafc; }
+  .results-table tbody tr.expanded { background: #f8fafc; }
+
+  .row-border-accepted { border-left: 3px solid var(--success); }
+  .row-border-rejected { border-left: 3px solid var(--danger); }
+  .row-border-suspect { border-left: 3px solid var(--warning); }
+  .row-border-none { border-left: 3px solid transparent; }
+
+  .status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+  }
+  .status-pill.accepted { background: var(--success-light); color: var(--success); }
+  .status-pill.rejected { background: var(--danger-light); color: var(--danger); }
+  .status-pill.suspect { background: var(--warning-light); color: var(--warning); }
+
+  .expand-icon {
+    display: inline-block;
+    transition: transform .2s;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-right: 6px;
+  }
+  .expand-icon.open { transform: rotate(90deg); }
+
+  .detail-row td {
+    padding: 0 12px 0 24px;
+    border-bottom: 1px solid var(--border);
+    cursor: default;
+  }
+  .detail-row:hover { background: transparent !important; }
+  .detail-content {
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin: 4px 0 12px;
+    font-size: 12px;
+  }
+  .detail-content .match-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+  }
+  .detail-content .match-card:last-child { margin-bottom: 0; }
+  .match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .match-header .list-name {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .match-header .score-badge {
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+  }
+  .score-high { background: var(--danger-light); color: var(--danger); }
+  .score-med { background: var(--warning-light); color: var(--warning); }
+  .score-low { background: #e0e7ff; color: #4338ca; }
+  .match-detail-row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 4px;
+    font-size: 12px;
+    padding: 2px 0;
+  }
+  .match-detail-label { color: var(--text-muted); font-weight: 500; }
+  .trax-code {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 10px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    font-family: 'Menlo', 'Consolas', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .no-matches-text {
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 4px 0;
+  }
+
+  /* --- Hidden --- */
+  .hidden { display: none !important; }
+
+  /* --- Fade in animation --- */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn .4s ease forwards; }
+
+  /* --- Responsive table wrapper --- */
+  .table-wrap { overflow-x: auto; }
+
+  /* --- Scrollbar styling --- */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  .session-notice {
+    padding: 8px 14px;
+    background: var(--primary-light);
+    border: 1px solid rgba(26,86,219,.2);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--primary-dark);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <div class="nav-brand">Bridger XG5 POC</div>
+  <ul class="nav-links">
+    <li><a href="01-pain001-viewer.html">1. XML Viewer</a></li>
+    <li><a href="02-api-explorer.html">2. API Explorer</a></li>
+    <li><a href="03-screening-flow.html" class="active">3. Screening Flow</a></li>
+    <li><a href="04-webhook-tester.html">4. Webhook Tester</a></li>
+    <li><a href="05-compliance-dashboard.html">5. Dashboard</a></li>
+  </ul>
+</nav>
+
+<div class="container">
+  <h1 class="page-title">E2E Screening Flow</h1>
+  <p class="page-subtitle">Parse payment files, screen parties against sanctions lists, and apply threshold rules in one visual pipeline.</p>
+
+  <!-- Session data notice (shown if data found) -->
+  <div id="sessionNotice" class="session-notice hidden">
+    <span>&#9432;</span>
+    <span id="sessionNoticeText"></span>
+  </div>
+
+  <!-- ===== INPUT SECTION ===== -->
+  <div class="card">
+    <div class="card-title"><span class="icon">&#128196;</span> Payment Input</div>
+    <div class="input-row">
+      <div>
+        <textarea id="xmlInput" class="xml-input-area" placeholder="Paste pain.001.001.03 XML here, load a sample, or upload a file..."></textarea>
+        <div class="btn-row">
+          <label class="file-upload-label">
+            &#128193; Upload XML
+            <input type="file" accept=".xml,.txt" id="fileUpload" class="file-upload-input">
+          </label>
+          <select id="sampleSelect">
+            <option value="">Load Sample...</option>
+            <option value="simple">Simple (3 clean payments)</option>
+            <option value="mixed">Mixed (2 clean + 3 suspicious)</option>
+            <option value="batch">Batch (8 payments, multi-block)</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text-secondary);">Threshold Configuration</div>
+        <div class="threshold-config">
+          <div class="threshold-group">
+            <label>Auto-Accept below:</label>
+            <input type="number" id="threshAccept" value="30" min="0" max="100">
+          </div>
+          <div class="threshold-group">
+            <label>Review range:</label>
+            <span class="threshold-info" id="threshReviewInfo">30 &ndash; 89</span>
+          </div>
+          <div class="threshold-group">
+            <label>Auto-Reject at or above:</label>
+            <input type="number" id="threshReject" value="90" min="0" max="100">
+          </div>
+          <div class="threshold-visual" id="thresholdBar"></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:-4px;">
+            <span>0 - Accept</span>
+            <span>Review</span>
+            <span>Reject - 100</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PIPELINE VISUALIZATION ===== -->
+  <div class="card">
+    <div class="card-title"><span class="icon">&#9881;</span> Screening Pipeline</div>
+    <div class="pipeline" id="pipeline">
+      <!-- Step 1: Parse -->
+      <div class="pipeline-step" id="step-parse">
+        <div class="pipeline-node" id="node-parse">&#128196;</div>
+        <div class="pipeline-label">Parse XML</div>
+        <div class="pipeline-status" id="status-parse"></div>
+      </div>
+      <div class="pipeline-connector" id="conn-1"></div>
+      <!-- Step 2: Auth -->
+      <div class="pipeline-step" id="step-auth">
+        <div class="pipeline-node" id="node-auth">&#128274;</div>
+        <div class="pipeline-label">Authenticate</div>
+        <div class="pipeline-status" id="status-auth"></div>
+      </div>
+      <div class="pipeline-connector" id="conn-2"></div>
+      <!-- Step 3: Screen -->
+      <div class="pipeline-step" id="step-screen">
+        <div class="pipeline-node" id="node-screen">&#128269;</div>
+        <div class="pipeline-label">Screen Parties</div>
+        <div class="pipeline-status" id="status-screen"></div>
+      </div>
+      <div class="pipeline-connector" id="conn-3"></div>
+      <!-- Step 4: Rules -->
+      <div class="pipeline-step" id="step-rules">
+        <div class="pipeline-node" id="node-rules">&#9878;</div>
+        <div class="pipeline-label">Apply Rules</div>
+        <div class="pipeline-status" id="status-rules"></div>
+      </div>
+      <div class="pipeline-connector" id="conn-4"></div>
+      <!-- Step 5: Status -->
+      <div class="pipeline-step" id="step-status">
+        <div class="pipeline-node" id="node-status">&#9989;</div>
+        <div class="pipeline-label">Assign Status</div>
+        <div class="pipeline-status" id="status-status"></div>
+      </div>
+    </div>
+    <div class="run-btn-row">
+      <button class="btn btn-primary btn-lg" id="runBtn" onclick="runScreening()">
+        &#9654; Run Screening
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== RESULTS SECTION ===== -->
+  <div class="card hidden" id="resultsCard">
+    <div class="card-title"><span class="icon">&#128202;</span> Screening Results</div>
+    <div class="summary-bar" id="summaryBar"></div>
+    <div class="table-wrap">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th style="width:28px"></th>
+            <th>Payment Ref</th>
+            <th>Debtor</th>
+            <th>Creditor</th>
+            <th style="text-align:right">Amount</th>
+            <th>Currency</th>
+            <th style="text-align:center">Top Score</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+    <div id="reviewBtnRow" class="hidden" style="text-align:center;margin-top:20px;">
+      <button class="btn btn-warning btn-lg" onclick="reviewSuspects()">
+        &#128270; Review Suspects
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Shared JS -->
+<script src="mock-bridger-server.js"></script>
+<script src="sample-data.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  // --- State ---
+  let screeningResults = null;
+  let running = false;
+
+  // --- DOM refs ---
+  const xmlInput = document.getElementById('xmlInput');
+  const sampleSelect = document.getElementById('sampleSelect');
+  const fileUpload = document.getElementById('fileUpload');
+  const threshAccept = document.getElementById('threshAccept');
+  const threshReject = document.getElementById('threshReject');
+  const threshReviewInfo = document.getElementById('threshReviewInfo');
+  const thresholdBar = document.getElementById('thresholdBar');
+  const runBtn = document.getElementById('runBtn');
+  const resultsCard = document.getElementById('resultsCard');
+  const summaryBar = document.getElementById('summaryBar');
+  const resultsBody = document.getElementById('resultsBody');
+  const reviewBtnRow = document.getElementById('reviewBtnRow');
+  const sessionNotice = document.getElementById('sessionNotice');
+  const sessionNoticeText = document.getElementById('sessionNoticeText');
+
+  const stepIds = ['parse', 'auth', 'screen', 'rules', 'status'];
+  const connIds = ['1', '2', '3', '4'];
+
+  // --- Threshold bar sync ---
+  function updateThresholdVisual() {
+    const a = parseInt(threshAccept.value) || 0;
+    const r = parseInt(threshReject.value) || 100;
+    threshReviewInfo.innerHTML = a + ' &ndash; ' + (r - 1);
+    thresholdBar.style.background =
+      'linear-gradient(to right, ' +
+      'var(--success) 0%, var(--success) ' + a + '%, ' +
+      'var(--warning) ' + a + '%, var(--warning) ' + r + '%, ' +
+      'var(--danger) ' + r + '%, var(--danger) 100%)';
+  }
+  threshAccept.addEventListener('input', updateThresholdVisual);
+  threshReject.addEventListener('input', updateThresholdVisual);
+  updateThresholdVisual();
+
+  // --- Sample loading ---
+  sampleSelect.addEventListener('change', function () {
+    if (this.value && SampleData.SAMPLES[this.value]) {
+      xmlInput.value = SampleData.SAMPLES[this.value].xml;
+      this.value = '';
+    }
+  });
+
+  // --- File upload ---
+  fileUpload.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) { xmlInput.value = e.target.result; };
+    reader.readAsText(file);
+    this.value = '';
+  });
+
+  // --- Check sessionStorage for data from Tool 1 ---
+  (function checkSession() {
+    try {
+      const stored = sessionStorage.getItem('bridger-poc-parsed');
+      if (stored) {
+        const data = JSON.parse(stored);
+        if (data && data.xml) {
+          xmlInput.value = data.xml;
+          sessionNoticeText.textContent = 'Loaded payment data from XML Viewer (Tool 1). You can edit it or load a different sample.';
+          sessionNotice.classList.remove('hidden');
+        }
+      }
+    } catch (e) { /* ignore */ }
+  })();
+
+  // --- Pipeline helpers ---
+  function resetPipeline() {
+    stepIds.forEach(function (id) {
+      var step = document.getElementById('step-' + id);
+      var node = document.getElementById('node-' + id);
+      step.classList.remove('active', 'done');
+      node.classList.remove('active', 'done', 'error');
+      // remove spinner if present
+      var spinner = node.querySelector('.spinner-ring');
+      if (spinner) spinner.remove();
+      document.getElementById('status-' + id).textContent = '';
+    });
+    connIds.forEach(function (id) {
+      var conn = document.getElementById('conn-' + id);
+      conn.classList.remove('active', 'done');
+    });
+  }
+
+  function activateStep(id) {
+    var step = document.getElementById('step-' + id);
+    var node = document.getElementById('node-' + id);
+    step.classList.add('active');
+    node.classList.add('active');
+    // add spinner
+    var spinner = document.createElement('div');
+    spinner.className = 'spinner-ring';
+    node.appendChild(spinner);
+  }
+
+  function completeStep(id, msg) {
+    var step = document.getElementById('step-' + id);
+    var node = document.getElementById('node-' + id);
+    step.classList.remove('active');
+    step.classList.add('done');
+    node.classList.remove('active');
+    node.classList.add('done');
+    var spinner = node.querySelector('.spinner-ring');
+    if (spinner) spinner.remove();
+    document.getElementById('status-' + id).textContent = msg;
+  }
+
+  function activateConnector(idx) {
+    document.getElementById('conn-' + idx).classList.add('active');
+  }
+  function completeConnector(idx) {
+    var conn = document.getElementById('conn-' + idx);
+    conn.classList.remove('active');
+    conn.classList.add('done');
+  }
+
+  function errorStep(id, msg) {
+    var step = document.getElementById('step-' + id);
+    var node = document.getElementById('node-' + id);
+    step.classList.remove('active');
+    node.classList.remove('active');
+    node.classList.add('error');
+    var spinner = node.querySelector('.spinner-ring');
+    if (spinner) spinner.remove();
+    document.getElementById('status-' + id).textContent = msg;
+    document.getElementById('status-' + id).style.color = 'var(--danger)';
+  }
+
+  function delay(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  // --- Main screening pipeline ---
+  window.runScreening = async function () {
+    if (running) return;
+    var xml = xmlInput.value.trim();
+    if (!xml) {
+      alert('Please paste or load a pain.001 XML document first.');
+      return;
+    }
+
+    running = true;
+    runBtn.disabled = true;
+    runBtn.innerHTML = '&#9203; Running...';
+    resultsCard.classList.add('hidden');
+    reviewBtnRow.classList.add('hidden');
+    resetPipeline();
+
+    try {
+      // === Step 1: Parse ===
+      activateStep('parse');
+      await delay(500);
+      var parsed;
+      try {
+        parsed = SampleData.parsePain001(xml);
+      } catch (e) {
+        errorStep('parse', 'Parse error: ' + e.message);
+        throw e;
+      }
+      var txnCount = 0;
+      parsed.batches.forEach(function (b) { txnCount += b.transactions.length; });
+      completeStep('parse', 'Parsed ' + txnCount + ' transaction' + (txnCount !== 1 ? 's' : ''));
+
+      // Connector 1
+      activateConnector('1');
+      await delay(400);
+      completeConnector('1');
+
+      // === Step 2: Authenticate ===
+      activateStep('auth');
+      await delay(500);
+      var authResult = MockBridger.tokenIssue('poc-client', 'screening-user', 'demo-pass-2026');
+      if (authResult.error) {
+        errorStep('auth', 'Auth failed');
+        throw new Error(authResult.error.Message);
+      }
+      var tokenPreview = authResult.access_token.substring(0, 24) + '...';
+      completeStep('auth', 'Token: ' + tokenPreview);
+
+      // Connector 2
+      activateConnector('2');
+      await delay(400);
+      completeConnector('2');
+
+      // === Step 3: Screen Parties ===
+      activateStep('screen');
+      await delay(600);
+      var entities = SampleData.paymentToEntities(parsed);
+      var searchRequest = {
+        EntitySearchRequest: {
+          Configuration: {
+            PredefinedSearchName: 'POC_Screening',
+            AssignResultTo: { Division: 'Compliance', RolesOrUsers: ['ComplianceTeam'], Type: 'Role' }
+          },
+          Input: {
+            BlockID: 'POC-' + Date.now(),
+            Records: entities
+          },
+          ClientContext: { ClientReference: parsed.header.msgId }
+        }
+      };
+      var searchResults = MockBridger.listsSearch(searchRequest);
+      var matchCount = searchResults.SearchResults.Records.filter(function (r) { return r.HasScreeningListMatches; }).length;
+      completeStep('screen', matchCount + ' match' + (matchCount !== 1 ? 'es' : '') + ' found');
+
+      // Connector 3
+      activateConnector('3');
+      await delay(400);
+      completeConnector('3');
+
+      // === Step 4: Apply Rules ===
+      activateStep('rules');
+      await delay(500);
+      var thresholds = {
+        autoAccept: parseInt(threshAccept.value) || 30,
+        autoReject: parseInt(threshReject.value) || 90
+      };
+      var thresholdResults = MockBridger.applyThresholds(searchResults, thresholds);
+
+      var acceptCount = 0, rejectCount = 0, suspectCount = 0;
+      thresholdResults.forEach(function (r) {
+        if (r.screening.traxStatus === 'EXTERNAL_ACCEPTED') acceptCount++;
+        else if (r.screening.traxStatus === 'EXTERNAL_REJECTED') rejectCount++;
+        else suspectCount++;
+      });
+      completeStep('rules', acceptCount + 'A / ' + suspectCount + 'S / ' + rejectCount + 'R');
+
+      // Connector 4
+      activateConnector('4');
+      await delay(400);
+      completeConnector('4');
+
+      // === Step 5: Assign Status ===
+      activateStep('status');
+      await delay(500);
+
+      // Build enriched results keyed by payment ref
+      // We need to group entity-level results back to payment level.
+      // Multiple entities may belong to the same payment (creditor + ultimate creditor).
+      var paymentMap = {};
+      thresholdResults.forEach(function (rec) {
+        var ref = rec._paymentRef || rec.Record;
+        if (!paymentMap[ref]) {
+          // find original entity info
+          var ent = entities.find(function (e) { return e.RecordID === rec.Record; });
+          paymentMap[ref] = {
+            ref: ref,
+            debtor: ent ? ent._debtorName : '',
+            creditor: ent ? (ent.Entity.Name.Full || '') : '',
+            amount: ent ? ent._amount : '',
+            currency: ent ? ent._currency : '',
+            topScore: 0,
+            traxStatus: 'EXTERNAL_ACCEPTED',
+            traxCode: 'PAY_PMT_REL_EXTERNAL_ACCEPTED',
+            decision: 'Auto-Release',
+            matches: [],
+            records: []
+          };
+        }
+        var pm = paymentMap[ref];
+        pm.records.push(rec);
+
+        // Aggregate: worst status wins
+        var score = rec.screening.topScore;
+        if (score > pm.topScore) pm.topScore = score;
+
+        // Status escalation: accepted < suspect < rejected
+        var statusRank = { 'EXTERNAL_ACCEPTED': 0, 'EXTERNAL_SUSPECT': 1, 'EXTERNAL_REJECTED': 2 };
+        if ((statusRank[rec.screening.traxStatus] || 0) > (statusRank[pm.traxStatus] || 0)) {
+          pm.traxStatus = rec.screening.traxStatus;
+          pm.traxCode = rec.screening.traxCode;
+          pm.decision = rec.screening.decision;
+        }
+
+        // Collect matches
+        if (rec.WatchlistResults && rec.WatchlistResults.length > 0) {
+          var entName = rec._meta ? rec._meta.inputName : '';
+          rec.WatchlistResults.forEach(function (m) {
+            pm.matches.push({
+              listName: m.File.Name,
+              entityName: m.BestName,
+              score: m.EntityScore,
+              reason: m.ReasonListed,
+              entityType: m.EntityType,
+              country: m.Country,
+              inputEntity: entName
+            });
+          });
+        }
+      });
+
+      var payments = Object.values(paymentMap);
+
+      // Recount at payment level
+      var pAccepted = 0, pRejected = 0, pSuspect = 0;
+      payments.forEach(function (p) {
+        if (p.traxStatus === 'EXTERNAL_ACCEPTED') pAccepted++;
+        else if (p.traxStatus === 'EXTERNAL_REJECTED') pRejected++;
+        else pSuspect++;
+      });
+
+      completeStep('status', pAccepted + ' accepted, ' + pSuspect + ' suspect, ' + pRejected + ' rejected');
+
+      // Store results
+      screeningResults = {
+        timestamp: new Date().toISOString(),
+        msgId: parsed.header.msgId,
+        payments: payments,
+        summary: { accepted: pAccepted, rejected: pRejected, suspect: pSuspect, total: payments.length },
+        thresholds: thresholds
+      };
+
+      // Save to sessionStorage
+      try {
+        sessionStorage.setItem('bridger-poc-results', JSON.stringify(screeningResults));
+      } catch (e) { /* ignore */ }
+
+      // Render results
+      renderResults(screeningResults);
+
+    } catch (e) {
+      console.error('Screening pipeline error:', e);
+    } finally {
+      running = false;
+      runBtn.disabled = false;
+      runBtn.innerHTML = '&#9654; Run Screening';
+    }
+  };
+
+  // --- Render results ---
+  function renderResults(data) {
+    resultsCard.classList.remove('hidden');
+    resultsCard.classList.add('fade-in');
+
+    // Summary bar
+    summaryBar.innerHTML =
+      '<span class="summary-badge accepted">' + data.summary.accepted + ' Accepted</span>' +
+      '<span class="summary-badge rejected">' + data.summary.rejected + ' Rejected</span>' +
+      '<span class="summary-badge suspect">' + data.summary.suspect + ' Suspect</span>';
+
+    // Table body
+    resultsBody.innerHTML = '';
+    data.payments.forEach(function (p, idx) {
+      var statusClass = p.traxStatus === 'EXTERNAL_ACCEPTED' ? 'accepted'
+        : p.traxStatus === 'EXTERNAL_REJECTED' ? 'rejected' : 'suspect';
+
+      var borderClass = p.matches.length > 0 ? 'row-border-' + statusClass : 'row-border-none';
+
+      var tr = document.createElement('tr');
+      tr.className = borderClass;
+      tr.setAttribute('data-idx', idx);
+
+      var formattedAmt = formatAmount(p.amount);
+
+      tr.innerHTML =
+        '<td><span class="expand-icon" id="expand-' + idx + '">&#9654;</span></td>' +
+        '<td style="font-weight:600;font-size:12px;font-family:monospace;">' + esc(p.ref) + '</td>' +
+        '<td>' + esc(p.debtor) + '</td>' +
+        '<td>' + esc(p.creditor) + '</td>' +
+        '<td style="text-align:right;font-family:monospace;">' + formattedAmt + '</td>' +
+        '<td>' + esc(p.currency) + '</td>' +
+        '<td style="text-align:center;font-weight:700;">' + p.topScore + '</td>' +
+        '<td><span class="status-pill ' + statusClass + '">' + statusLabel(p.traxStatus) + '</span></td>';
+
+      tr.addEventListener('click', function () { toggleDetail(idx); });
+      resultsBody.appendChild(tr);
+
+      // Detail row (hidden initially)
+      var detailTr = document.createElement('tr');
+      detailTr.className = 'detail-row hidden';
+      detailTr.id = 'detail-' + idx;
+      var detailTd = document.createElement('td');
+      detailTd.colSpan = 8;
+
+      var detailHtml = '<div class="detail-content">';
+      if (p.matches.length === 0) {
+        detailHtml += '<p class="no-matches-text">No watchlist matches found for this payment.</p>';
+      } else {
+        detailHtml += '<div style="font-weight:600;margin-bottom:8px;font-size:13px;">Watchlist Matches (' + p.matches.length + ')</div>';
+        p.matches.forEach(function (m) {
+          var scoreCls = m.score >= 90 ? 'score-high' : m.score >= 30 ? 'score-med' : 'score-low';
+          detailHtml += '<div class="match-card">' +
+            '<div class="match-header">' +
+            '<span class="list-name">' + esc(m.listName) + '</span>' +
+            '<span class="score-badge ' + scoreCls + '">Score: ' + m.score + '</span>' +
+            '</div>' +
+            '<div class="match-detail-row"><span class="match-detail-label">Matched Entity:</span><span>' + esc(m.entityName) + '</span></div>' +
+            '<div class="match-detail-row"><span class="match-detail-label">Screened Name:</span><span>' + esc(m.inputEntity) + '</span></div>' +
+            '<div class="match-detail-row"><span class="match-detail-label">Entity Type:</span><span>' + esc(m.entityType) + '</span></div>' +
+            '<div class="match-detail-row"><span class="match-detail-label">Country:</span><span>' + esc(m.country) + '</span></div>' +
+            '<div class="match-detail-row"><span class="match-detail-label">Reason Listed:</span><span>' + esc(m.reason) + '</span></div>' +
+            '</div>';
+        });
+      }
+      detailHtml += '<div class="trax-code">' + esc(p.traxCode) + '</div>';
+      detailHtml += '</div>';
+
+      detailTd.innerHTML = detailHtml;
+      detailTr.appendChild(detailTd);
+      resultsBody.appendChild(detailTr);
+    });
+
+    // Review suspects button
+    if (data.summary.suspect > 0) {
+      reviewBtnRow.classList.remove('hidden');
+    } else {
+      reviewBtnRow.classList.add('hidden');
+    }
+
+    // Scroll results into view
+    setTimeout(function () {
+      resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
+  function toggleDetail(idx) {
+    var detailRow = document.getElementById('detail-' + idx);
+    var expandIcon = document.getElementById('expand-' + idx);
+    var parentRow = resultsBody.querySelector('tr[data-idx="' + idx + '"]');
+    if (detailRow.classList.contains('hidden')) {
+      detailRow.classList.remove('hidden');
+      expandIcon.classList.add('open');
+      parentRow.classList.add('expanded');
+    } else {
+      detailRow.classList.add('hidden');
+      expandIcon.classList.remove('open');
+      parentRow.classList.remove('expanded');
+    }
+  }
+
+  // --- Review suspects ---
+  window.reviewSuspects = function () {
+    if (!screeningResults) return;
+    var suspects = screeningResults.payments.filter(function (p) {
+      return p.traxStatus === 'EXTERNAL_SUSPECT';
+    });
+    try {
+      sessionStorage.setItem('bridger-poc-suspects', JSON.stringify({
+        timestamp: screeningResults.timestamp,
+        msgId: screeningResults.msgId,
+        suspects: suspects,
+        thresholds: screeningResults.thresholds
+      }));
+    } catch (e) { /* ignore */ }
+    window.open('05-compliance-dashboard.html', '_blank');
+  };
+
+  // --- Utility ---
+  function esc(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function statusLabel(s) {
+    if (s === 'EXTERNAL_ACCEPTED') return 'Accepted';
+    if (s === 'EXTERNAL_REJECTED') return 'Rejected';
+    if (s === 'EXTERNAL_SUSPECT') return 'Suspect';
+    return s;
+  }
+
+  function formatAmount(val) {
+    if (!val) return '';
+    var num = parseFloat(val);
+    if (isNaN(num)) return esc(val);
+    return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+})();
+</script>
+</body>
+</html>

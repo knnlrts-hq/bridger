@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bridger XG5 POC - Webhook Simulator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #1a56db;
+    --primary-light: #e8eefb;
+    --primary-dark: #1e429f;
+    --success: #059669;
+    --success-light: #ecfdf5;
+    --success-bg: #d1fae5;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --danger-bg: #fee2e2;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
+    --warning-bg: #fef3c7;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', SFMono-Regular, 'Cascadia Code', 'Consolas', 'Liberation Mono', Menlo, monospace;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* --- Nav --- */
+  .nav {
+    background: var(--primary-dark);
+    color: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .nav-brand {
+    font-weight: 700;
+    font-size: 15px;
+    margin-right: 24px;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-brand svg { flex-shrink: 0; }
+  .nav a {
+    color: rgba(255,255,255,0.75);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .nav a:hover { color: #fff; background: rgba(255,255,255,0.1); }
+  .nav a.active { color: #fff; background: rgba(255,255,255,0.18); }
+
+  /* --- Layout --- */
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+  .page-title {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .page-title h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .page-title p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  /* --- Two-panel layout --- */
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 48px 1fr;
+    gap: 0;
+    align-items: start;
+    margin-bottom: 24px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .panel-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .panel-header-icon.sender { background: var(--primary-light); color: var(--primary); }
+  .panel-header-icon.receiver { background: var(--success-light); color: var(--success); }
+  .panel-header h2 { font-size: 16px; font-weight: 700; }
+  .panel-header .subtitle { font-size: 12px; color: var(--text-secondary); font-weight: 400; }
+  .panel-body { padding: 20px; }
+
+  /* --- Flow Arrow --- */
+  .flow-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 120px;
+    gap: 8px;
+    color: var(--text-muted);
+  }
+  .flow-arrow .arrow-line {
+    width: 2px;
+    height: 40px;
+    background: var(--border);
+  }
+  .flow-arrow svg { color: var(--primary); }
+  .flow-arrow .arrow-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    writing-mode: vertical-lr;
+    color: var(--text-muted);
+  }
+
+  /* --- Forms --- */
+  .form-section {
+    margin-bottom: 20px;
+  }
+  .form-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .form-row.single { grid-template-columns: 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+  }
+  .secret-wrapper {
+    display: flex;
+    gap: 0;
+  }
+  .secret-wrapper input {
+    flex: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .secret-toggle {
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-left: none;
+    background: var(--bg);
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    transition: background 0.15s;
+  }
+  .secret-toggle:hover { background: #e2e8f0; }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .checkbox-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+  }
+  .checkbox-row label { font-size: 13px; }
+
+  /* --- Buttons --- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #047857; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-outline {
+    background: var(--surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { background: var(--bg); color: var(--text); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-block { width: 100%; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+
+  /* --- Code blocks --- */
+  .code-block {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .code-block .key { color: #93c5fd; }
+  .code-block .string { color: #86efac; }
+  .code-block .number { color: #fbbf24; }
+  .code-block .bool { color: #f472b6; }
+  .code-block .null { color: #94a3b8; }
+  .code-block .header-name { color: #c4b5fd; }
+  .code-block .header-value { color: #86efac; }
+
+  /* --- Signing steps --- */
+  .signing-steps {
+    margin-top: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .signing-steps-header {
+    padding: 10px 14px;
+    background: var(--bg);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .signing-steps-header:hover { background: #eef2f7; }
+  .signing-steps-header .chevron {
+    transition: transform 0.2s;
+    color: var(--text-muted);
+  }
+  .signing-steps-header .chevron.open { transform: rotate(90deg); }
+  .signing-steps-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+  .signing-steps-body.open { max-height: 2000px; }
+  .step {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .step.visible { opacity: 1; transform: translateY(0); }
+  .step-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .step-label .step-num {
+    background: var(--primary);
+    color: #fff;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .step-content {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: #f1f5f9;
+    padding: 8px 10px;
+    border-radius: 4px;
+    word-break: break-all;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* --- Receiver sections --- */
+  .receiver-section {
+    margin-bottom: 20px;
+  }
+  .receiver-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* --- Verification --- */
+  .verify-step {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--surface);
+  }
+  .verify-step-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .verify-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .verify-icon.valid { background: var(--success-bg); color: var(--success); }
+  .verify-icon.invalid { background: var(--danger-bg); color: var(--danger); }
+  .verify-icon.neutral { background: #e2e8f0; color: var(--text-secondary); }
+  .verify-detail {
+    margin-top: 8px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text-secondary);
+    word-break: break-all;
+    line-height: 1.6;
+  }
+  .verify-compare {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 10px;
+    margin-top: 6px;
+    font-size: 11.5px;
+    font-family: var(--mono);
+  }
+  .verify-compare .label {
+    color: var(--text-secondary);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .verify-compare .value { word-break: break-all; }
+  .verify-compare .match { color: var(--success); }
+  .verify-compare .mismatch { color: var(--danger); }
+
+  .verdict-banner {
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .verdict-banner.valid {
+    background: var(--success-bg);
+    color: #065f46;
+    border: 2px solid var(--success);
+  }
+  .verdict-banner.invalid {
+    background: var(--danger-bg);
+    color: #991b1b;
+    border: 2px solid var(--danger);
+  }
+
+  /* --- Decision mapping --- */
+  .mapping-box {
+    background: var(--primary-light);
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+  .mapping-arrow {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .mapping-from { font-family: var(--mono); font-size: 12px; color: var(--text); }
+  .mapping-to {
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .mapping-to.accepted { background: var(--success-bg); color: #065f46; }
+  .mapping-to.rejected { background: var(--danger-bg); color: #991b1b; }
+  .mapping-to.suspect { background: var(--warning-bg); color: #92400e; }
+  .mapping-to.unknown { background: #e2e8f0; color: var(--text-secondary); }
+
+  /* --- Tamper mode --- */
+  .tamper-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .toggle-switch {
+    width: 44px;
+    height: 24px;
+    background: #cbd5e1;
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch.active { background: var(--danger); }
+  .toggle-switch::after {
+    content: '';
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-switch.active::after { transform: translateX(20px); }
+  .tamper-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .tamper-label.active { color: var(--danger); }
+  .tamper-area {
+    display: none;
+  }
+  .tamper-area.visible { display: block; }
+  .tamper-area textarea {
+    width: 100%;
+    min-height: 120px;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 12px;
+    border: 2px dashed var(--danger);
+    border-radius: 6px;
+    background: #fff5f5;
+    color: var(--text);
+    resize: vertical;
+  }
+  .tamper-area textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(220,38,38,0.15); }
+
+  /* --- Audit log --- */
+  .audit-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .audit-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .audit-header h3 { font-size: 15px; font-weight: 700; }
+  .audit-count {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .audit-table th {
+    background: var(--bg);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+  .audit-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .audit-table tr:last-child td { border-bottom: none; }
+  .audit-table tr:hover td { background: #f8fafc; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge.valid { background: var(--success-bg); color: #065f46; }
+  .badge.invalid { background: var(--danger-bg); color: #991b1b; }
+  .badge.accepted { background: var(--success-bg); color: #065f46; }
+  .badge.rejected { background: var(--danger-bg); color: #991b1b; }
+  .badge.suspect { background: var(--warning-bg); color: #92400e; }
+  .badge.unknown { background: #e2e8f0; color: var(--text-secondary); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; }
+  .empty-state .hint { font-size: 12px; margin-top: 6px; }
+
+  /* --- Responsive --- */
+  @media (max-width: 1000px) {
+    .panels {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .flow-arrow {
+      padding-top: 0;
+      flex-direction: row;
+      justify-content: center;
+    }
+    .flow-arrow .arrow-line { width: 40px; height: 2px; }
+    .flow-arrow .arrow-label { writing-mode: horizontal-tb; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Bridger XG5 POC
+  </div>
+  <a href="01-auth-explorer.html">Auth</a>
+  <a href="02-screening-workbench.html">Screening</a>
+  <a href="03-results-manager.html">Results</a>
+  <a href="04-webhook-simulator.html" class="active">Webhooks</a>
+  <a href="05-integration-dashboard.html">Integration</a>
+</nav>
+
+<div class="container">
+  <div class="page-title">
+    <h1>Webhook Signing &amp; Verification Simulator</h1>
+    <p>Demonstrates HMAC-SHA256 webhook authentication between Bridger XG5 and your Bank Connector</p>
+  </div>
+
+  <!-- Two-Panel Layout -->
+  <div class="panels">
+
+    <!-- LEFT PANEL: Sender -->
+    <div class="panel" id="senderPanel">
+      <div class="panel-header">
+        <div class="panel-header-icon sender">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <h2>Bridger XG5 <span class="subtitle">(Sender)</span></h2>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <!-- Webhook Config -->
+        <div class="form-section">
+          <div class="form-section-title">Webhook Configuration</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Webhook URL Path</label>
+              <input type="text" id="cfgPath" value="/api/bridger/webhook">
+            </div>
+            <div class="form-group">
+              <label>Host</label>
+              <input type="text" id="cfgHost" value="bankconnector.example.com:443">
+            </div>
+          </div>
+          <div class="form-row single">
+            <div class="form-group">
+              <label>Shared Secret</label>
+              <div class="secret-wrapper">
+                <input type="password" id="cfgSecret" value="mock-webhook-secret-key-2026">
+                <button class="secret-toggle" id="secretToggle" type="button">Show</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payload Builder -->
+        <div class="form-section">
+          <div class="form-section-title">Payload Builder</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Event Type</label>
+              <select id="payEventType">
+                <option value="AlertStateClosed">AlertStateClosed</option>
+                <option value="AlertDecisionApplied">AlertDecisionApplied</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>ResultId</label>
+              <input type="number" id="payResultId" value="200001">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status</label>
+              <select id="payStatus">
+                <option value="Pending Review">Pending Review</option>
+                <option value="Transaction Approved">Transaction Approved</option>
+                <option value="Blocked Account">Blocked Account</option>
+                <option value="False Positive">False Positive</option>
+                <option value="Undetermined">Undetermined</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>State</label>
+              <select id="payState">
+                <option value="Open">Open</option>
+                <option value="Closed">Closed</option>
+                <option value="Unassigned">Unassigned</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>AssignedTo</label>
+              <input type="text" id="payAssignedTo" value="ComplianceOfficer1">
+            </div>
+            <div class="form-group">
+              <label>AssignmentType</label>
+              <select id="payAssignmentType">
+                <option value="User">User</option>
+                <option value="Role">Role</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>DecisionTags (comma-separated)</label>
+              <input type="text" id="payDecisionTags" value="Reviewed,FalsePositive">
+            </div>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="payNote" checked>
+            <label for="payNote">Include Note flag</label>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-outline btn-sm" id="loadStateBtn" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-6.219-8.56"/><polyline points="21 3 21 9 15 9"/></svg>
+              Load from Mock State
+            </button>
+          </div>
+        </div>
+
+        <!-- Sign & Send Button -->
+        <button class="btn btn-primary btn-block" id="signSendBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          Sign &amp; Send Webhook
+        </button>
+
+        <!-- Signing Details -->
+        <div class="signing-steps" id="signingSteps" style="display:none;">
+          <div class="signing-steps-header" id="signingStepsToggle">
+            <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            Signing Details
+          </div>
+          <div class="signing-steps-body" id="signingStepsBody">
+            <div class="step" id="signStep1">
+              <div class="step-label"><span class="step-num">1</span> SHA-256 Content Hash</div>
+              <div class="step-content" id="signStep1Content"></div>
+            </div>
+            <div class="step" id="signStep2">
+              <div class="step-label"><span class="step-num">2</span> String to Sign</div>
+              <div class="step-content" id="signStep2Content"></div>
+            </div>
+            <div class="step" id="signStep3">
+              <div class="step-label"><span class="step-num">3</span> HMAC-SHA256 Signature</div>
+              <div class="step-content" id="signStep3Content"></div>
+            </div>
+            <div class="step" id="signStep4">
+              <div class="step-label"><span class="step-num">4</span> Authorization Header</div>
+              <div class="step-content" id="signStep4Content"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generated Headers -->
+        <div id="generatedHeaders" style="display:none; margin-top: 16px;">
+          <div class="form-section-title">Generated Headers</div>
+          <div class="code-block" id="headersCode"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Flow Arrow -->
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 16 16 12 12 8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <div class="arrow-label">HTTPS POST</div>
+      <div class="arrow-line"></div>
+    </div>
+
+    <!-- RIGHT PANEL: Receiver -->
+    <div class="panel" id="receiverPanel">
+      <div class="panel-header">
+        <div class="panel-header-icon receiver">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div>
+          <h2>Bank Connector <span class="subtitle">(Receiver)</span></h2>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <!-- Empty state -->
+        <div id="receiverEmpty" class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          <p>Waiting for webhook...</p>
+          <p class="hint">Click "Sign &amp; Send" on the left panel to simulate a webhook delivery</p>
+        </div>
+
+        <!-- Incoming Webhook -->
+        <div id="receiverContent" style="display:none;">
+
+          <div class="receiver-section">
+            <div class="receiver-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Incoming Webhook
+            </div>
+            <div style="margin-bottom: 8px;">
+              <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Headers</div>
+              <div class="code-block" id="receivedHeaders" style="font-size: 11.5px;"></div>
+            </div>
+            <div>
+              <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Payload</div>
+              <div class="code-block" id="receivedPayload"></div>
+            </div>
+          </div>
+
+          <!-- Verification Steps -->
+          <div class="receiver-section">
+            <div class="receiver-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Verification Steps
+            </div>
+            <div id="verifySteps"></div>
+            <div id="verdictBanner"></div>
+          </div>
+
+          <!-- Decision Mapping -->
+          <div class="receiver-section">
+            <div class="receiver-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+              Decision Mapping
+            </div>
+            <div id="decisionMapping"></div>
+          </div>
+
+          <!-- Tamper Mode -->
+          <div class="receiver-section">
+            <div class="receiver-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Tamper Mode
+            </div>
+            <div class="tamper-toggle">
+              <div class="toggle-switch" id="tamperSwitch"></div>
+              <span class="tamper-label" id="tamperLabel">Enable Tamper Mode</span>
+            </div>
+            <div class="tamper-area" id="tamperArea">
+              <p style="font-size: 12px; color: var(--danger); margin-bottom: 8px; font-weight: 500;">
+                Edit the payload below to see how HMAC signatures detect tampering.
+              </p>
+              <textarea id="tamperPayload"></textarea>
+              <div style="margin-top: 8px;">
+                <button class="btn btn-danger btn-sm" id="reVerifyBtn" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-6.219-8.56"/><polyline points="21 3 21 9 15 9"/></svg>
+                  Re-verify with Tampered Payload
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Log -->
+  <div class="audit-section">
+    <div class="audit-header">
+      <h3>Audit Log</h3>
+      <span class="audit-count" id="auditCount">0 events</span>
+    </div>
+    <div id="auditBody">
+      <div class="empty-state" id="auditEmpty" style="padding: 30px;">
+        <p>No webhook events processed yet</p>
+      </div>
+      <table class="audit-table" id="auditTable" style="display:none;">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>EventType</th>
+            <th>ResultId</th>
+            <th>Status</th>
+            <th>Signature Valid</th>
+            <th>Trax Mapping</th>
+          </tr>
+        </thead>
+        <tbody id="auditTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="mock-bridger-server.js"></script>
+<script src="sample-data.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ---- DOM Refs ----
+  const $ = id => document.getElementById(id);
+
+  const cfgPath = $('cfgPath');
+  const cfgHost = $('cfgHost');
+  const cfgSecret = $('cfgSecret');
+  const secretToggle = $('secretToggle');
+  const payEventType = $('payEventType');
+  const payResultId = $('payResultId');
+  const payStatus = $('payStatus');
+  const payState = $('payState');
+  const payAssignedTo = $('payAssignedTo');
+  const payAssignmentType = $('payAssignmentType');
+  const payDecisionTags = $('payDecisionTags');
+  const payNote = $('payNote');
+  const loadStateBtn = $('loadStateBtn');
+  const signSendBtn = $('signSendBtn');
+  const signingSteps = $('signingSteps');
+  const signingStepsToggle = $('signingStepsToggle');
+  const signingStepsBody = $('signingStepsBody');
+  const generatedHeaders = $('generatedHeaders');
+  const headersCode = $('headersCode');
+  const receiverEmpty = $('receiverEmpty');
+  const receiverContent = $('receiverContent');
+  const receivedHeaders = $('receivedHeaders');
+  const receivedPayload = $('receivedPayload');
+  const verifySteps = $('verifySteps');
+  const verdictBanner = $('verdictBanner');
+  const decisionMapping = $('decisionMapping');
+  const tamperSwitch = $('tamperSwitch');
+  const tamperLabel = $('tamperLabel');
+  const tamperArea = $('tamperArea');
+  const tamperPayload = $('tamperPayload');
+  const reVerifyBtn = $('reVerifyBtn');
+  const auditCount = $('auditCount');
+  const auditEmpty = $('auditEmpty');
+  const auditTable = $('auditTable');
+  const auditTableBody = $('auditTableBody');
+
+  // ---- State ----
+  let lastWebhookData = null; // { payload, payloadJson, headers, stringToSign, contentHash, signature }
+  let tamperMode = false;
+  const auditLog = [];
+
+  // ---- Secret toggle ----
+  secretToggle.addEventListener('click', () => {
+    if (cfgSecret.type === 'password') {
+      cfgSecret.type = 'text';
+      secretToggle.textContent = 'Hide';
+    } else {
+      cfgSecret.type = 'password';
+      secretToggle.textContent = 'Show';
+    }
+  });
+
+  // ---- Load from Mock State ----
+  loadStateBtn.addEventListener('click', () => {
+    const state = MockBridger.getState();
+    if (state.records.length === 0) {
+      alert('No records in mock state. Use the Screening Workbench (Tool 2) first to create some records.');
+      return;
+    }
+    const rec = state.records[state.records.length - 1];
+    payResultId.value = rec.ResultID;
+    payStatus.value = rec.RecordState.Status;
+    payState.value = rec.RecordState.AlertState;
+    if (rec.RecordState.AssignedTo && rec.RecordState.AssignedTo.length > 0) {
+      payAssignedTo.value = Array.isArray(rec.RecordState.AssignedTo)
+        ? rec.RecordState.AssignedTo[0]
+        : rec.RecordState.AssignedTo;
+    }
+    payAssignmentType.value = rec.RecordState.AssignmentType || 'Role';
+    payNote.checked = !!rec.RecordState.Note;
+  });
+
+  // ---- Signing Steps toggle ----
+  signingStepsToggle.addEventListener('click', () => {
+    const chevron = signingStepsToggle.querySelector('.chevron');
+    const body = signingStepsBody;
+    chevron.classList.toggle('open');
+    body.classList.toggle('open');
+  });
+
+  // ---- Sign & Send ----
+  signSendBtn.addEventListener('click', async () => {
+    signSendBtn.disabled = true;
+    signSendBtn.textContent = 'Signing...';
+
+    try {
+      const path = cfgPath.value.trim();
+      const host = cfgHost.value.trim();
+      const secret = cfgSecret.value;
+      const eventType = payEventType.value;
+      const resultId = parseInt(payResultId.value, 10);
+      const status = payStatus.value;
+      const state = payState.value;
+      const assignedTo = payAssignedTo.value.trim();
+      const assignmentType = payAssignmentType.value;
+      const decisionTagsStr = payDecisionTags.value.trim();
+      const decisionTags = decisionTagsStr ? decisionTagsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
+      const noteFlag = payNote.checked;
+
+      // Build payload
+      const now = new Date();
+      const dateStr = now.toUTCString();
+
+      const payload = {
+        ResultId: resultId,
+        EventType: eventType === 'AlertStateClosed' ? 'AlertClosed' : 'AlertDecisionApplied',
+        Status: status,
+        DateCreated: now.toISOString(),
+        DateModified: now.toISOString(),
+        State: state,
+        AssignedTo: assignedTo,
+        AssignmentType: assignmentType
+      };
+      if (noteFlag) payload.Note = 1;
+      if (decisionTags.length > 0) payload.DecisionTags = decisionTags;
+
+      const payloadJson = JSON.stringify(payload);
+
+      // Step 1: SHA-256 hash of payload
+      const contentHash = await MockBridger.sha256Base64(payloadJson);
+
+      // Step 2: String to sign
+      const stringToSign = `POST\n${path}\n${dateStr};${host};${contentHash}`;
+
+      // Step 3: HMAC-SHA256
+      const signature = await MockBridger.hmacSha256Base64(secret, stringToSign);
+
+      // Step 4: Authorization header
+      const authHeader = `HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=${signature}`;
+
+      const headers = {
+        'x-ms-date': dateStr,
+        'x-ms-content-sha256': contentHash,
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      };
+
+      lastWebhookData = { payload, payloadJson, headers, stringToSign, contentHash, signature, dateStr };
+
+      // Show signing steps
+      signingSteps.style.display = '';
+      const chevron = signingStepsToggle.querySelector('.chevron');
+      chevron.classList.add('open');
+      signingStepsBody.classList.add('open');
+
+      // Animate steps
+      const steps = [
+        { el: $('signStep1'), content: $('signStep1Content'), html: `SHA256("${escHtml(truncate(payloadJson, 60))}...")\n= <strong>${escHtml(contentHash)}</strong>` },
+        { el: $('signStep2'), content: $('signStep2Content'), html: `POST\\n${escHtml(path)}\\n${escHtml(dateStr)};${escHtml(host)};${escHtml(contentHash)}` },
+        { el: $('signStep3'), content: $('signStep3Content'), html: `HMAC-SHA256("${escHtml(truncate(secret, 20))}...", stringToSign)\n= <strong>${escHtml(signature)}</strong>` },
+        { el: $('signStep4'), content: $('signStep4Content'), html: `<strong>${escHtml(authHeader)}</strong>` }
+      ];
+
+      // Reset all steps
+      steps.forEach(s => s.el.classList.remove('visible'));
+
+      // Reveal one by one
+      for (let i = 0; i < steps.length; i++) {
+        await delay(200 + i * 50);
+        steps[i].content.innerHTML = steps[i].html;
+        steps[i].el.classList.add('visible');
+      }
+
+      // Show generated headers
+      generatedHeaders.style.display = '';
+      headersCode.innerHTML = formatHeaders(headers);
+
+      // Send to receiver
+      await receiveWebhook(payloadJson, headers);
+
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      signSendBtn.disabled = false;
+      signSendBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Sign &amp; Send Webhook`;
+    }
+  });
+
+  // ---- Receive webhook on right panel ----
+  async function receiveWebhook(payloadJson, headers) {
+    receiverEmpty.style.display = 'none';
+    receiverContent.style.display = '';
+
+    // Show received headers
+    receivedHeaders.innerHTML = formatHeaders(headers);
+
+    // Show received payload
+    receivedPayload.innerHTML = syntaxHighlightJson(payloadJson);
+
+    // Set tamper payload
+    tamperPayload.value = JSON.stringify(JSON.parse(payloadJson), null, 2);
+
+    // Run verification
+    await runVerification(payloadJson, headers, false);
+  }
+
+  async function runVerification(payloadJson, headers, isTampered) {
+    const path = cfgPath.value.trim();
+    const host = cfgHost.value.trim();
+    const secret = cfgSecret.value;
+
+    const result = await MockBridger.validateWebhookSignature(payloadJson, headers, secret, host, path);
+
+    // Build verification step UI
+    let html = '';
+
+    // Step 1: Content integrity
+    const s1 = result.steps[0];
+    html += buildVerifyStep(
+      1,
+      'Content Integrity',
+      `Recompute SHA-256 hash of received payload body`,
+      s1.valid,
+      [
+        { label: 'Computed:', value: s1.computed, match: s1.valid },
+        { label: 'Received:', value: s1.received, match: s1.valid }
+      ]
+    );
+
+    // Step 2: String reconstruction
+    const s2 = result.steps[1];
+    html += buildVerifyStep(
+      2,
+      'String Reconstruction',
+      `Reconstruct the canonical StringToSign`,
+      null,
+      null,
+      escHtml(s2.value).replace(/\\n/g, '<span style="color:var(--warning);">\\n</span>')
+    );
+
+    // Step 3: HMAC computation
+    const s3 = result.steps[2];
+    html += buildVerifyStep(
+      3,
+      'HMAC Computation',
+      `Compute HMAC-SHA256 using shared secret`,
+      null,
+      null,
+      escHtml(s3.value)
+    );
+
+    // Step 4: Signature comparison
+    const s4 = result.steps[3];
+    html += buildVerifyStep(
+      4,
+      'Signature Comparison',
+      `Compare computed signature with received`,
+      s4.valid,
+      [
+        { label: 'Computed:', value: s4.computed, match: s4.valid },
+        { label: 'Received:', value: s4.received, match: s4.valid }
+      ]
+    );
+
+    verifySteps.innerHTML = html;
+
+    // Verdict banner
+    if (result.valid) {
+      verdictBanner.innerHTML = `
+        <div class="verdict-banner valid">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          SIGNATURE VALID &mdash; Webhook Authenticated
+        </div>`;
+    } else {
+      verdictBanner.innerHTML = `
+        <div class="verdict-banner invalid">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          SIGNATURE INVALID &mdash; ${isTampered ? 'Tampering Detected!' : 'Webhook Rejected'}
+        </div>`;
+    }
+
+    // Decision mapping
+    let parsedPayload;
+    try { parsedPayload = JSON.parse(payloadJson); } catch { parsedPayload = lastWebhookData?.payload || {}; }
+    const mapping = mapDecision(parsedPayload.EventType, parsedPayload.Status);
+    decisionMapping.innerHTML = `
+      <div class="mapping-box">
+        <span class="mapping-from">${escHtml(parsedPayload.EventType || '?')} + ${escHtml(parsedPayload.Status || '?')}</span>
+        <span class="mapping-arrow">&rarr;</span>
+        <span class="mapping-to ${mapping.cssClass}">${escHtml(mapping.traxStatus)}</span>
+      </div>`;
+
+    // Add to audit log (only on non-tamper or first tamper)
+    if (!isTampered || auditLog.length === 0 || auditLog[auditLog.length - 1].payloadJson !== payloadJson) {
+      auditLog.push({
+        timestamp: new Date().toLocaleTimeString(),
+        eventType: parsedPayload.EventType || '?',
+        resultId: parsedPayload.ResultId || '?',
+        status: parsedPayload.Status || '?',
+        signatureValid: result.valid,
+        traxMapping: mapping.traxStatus,
+        traxClass: mapping.cssClass,
+        payloadJson: payloadJson,
+        tampered: isTampered
+      });
+      renderAuditLog();
+    }
+  }
+
+  function buildVerifyStep(num, title, desc, valid, comparisons, rawDetail) {
+    let iconClass = valid === true ? 'valid' : valid === false ? 'invalid' : 'neutral';
+    let iconSvg;
+    if (valid === true) {
+      iconSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    } else if (valid === false) {
+      iconSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    } else {
+      iconSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/></svg>';
+    }
+
+    let detailHtml = '';
+    if (comparisons) {
+      detailHtml = '<div class="verify-compare">';
+      for (const c of comparisons) {
+        detailHtml += `<span class="label">${escHtml(c.label)}</span><span class="value ${c.match ? 'match' : 'mismatch'}">${escHtml(c.value)}</span>`;
+      }
+      detailHtml += '</div>';
+    }
+    if (rawDetail) {
+      detailHtml += `<div class="verify-detail">${rawDetail}</div>`;
+    }
+
+    return `
+      <div class="verify-step">
+        <div class="verify-step-header">
+          <div class="verify-icon ${iconClass}">${iconSvg}</div>
+          <div>
+            <div style="font-size:13px; font-weight:600;">Step ${num}: ${escHtml(title)}</div>
+            <div style="font-size:11px; color:var(--text-muted);">${escHtml(desc)}</div>
+          </div>
+        </div>
+        ${detailHtml}
+      </div>`;
+  }
+
+  // ---- Tamper mode ----
+  tamperSwitch.addEventListener('click', () => {
+    tamperMode = !tamperMode;
+    tamperSwitch.classList.toggle('active', tamperMode);
+    tamperLabel.classList.toggle('active', tamperMode);
+    tamperLabel.textContent = tamperMode ? 'Tamper Mode Enabled' : 'Enable Tamper Mode';
+    tamperArea.classList.toggle('visible', tamperMode);
+  });
+
+  reVerifyBtn.addEventListener('click', async () => {
+    if (!lastWebhookData) return;
+    const tamperedJson = tamperPayload.value;
+    // Update the displayed received payload to show tampered version
+    receivedPayload.innerHTML = syntaxHighlightJson(tamperedJson);
+    await runVerification(tamperedJson, lastWebhookData.headers, true);
+  });
+
+  // ---- Decision mapping ----
+  function mapDecision(eventType, status) {
+    const rules = {
+      'AlertDecisionApplied': {
+        'Transaction Approved': { traxStatus: 'EXTERNAL_ACCEPTED', cssClass: 'accepted' },
+        'False Positive': { traxStatus: 'EXTERNAL_ACCEPTED', cssClass: 'accepted' },
+        'Blocked Account': { traxStatus: 'EXTERNAL_REJECTED', cssClass: 'rejected' },
+        'Pending Review': { traxStatus: 'EXTERNAL_SUSPECT', cssClass: 'suspect' },
+        'Undetermined': { traxStatus: 'EXTERNAL_SUSPECT', cssClass: 'suspect' }
+      },
+      'AlertClosed': {
+        'Transaction Approved': { traxStatus: 'EXTERNAL_ACCEPTED', cssClass: 'accepted' },
+        'False Positive': { traxStatus: 'EXTERNAL_ACCEPTED', cssClass: 'accepted' },
+        'Blocked Account': { traxStatus: 'EXTERNAL_REJECTED', cssClass: 'rejected' },
+        'Pending Review': { traxStatus: 'EXTERNAL_ACCEPTED', cssClass: 'accepted' },
+        'Undetermined': { traxStatus: 'EXTERNAL_ACCEPTED', cssClass: 'accepted' }
+      }
+    };
+    const eventRules = rules[eventType];
+    if (eventRules && eventRules[status]) return eventRules[status];
+    return { traxStatus: 'UNMAPPED', cssClass: 'unknown' };
+  }
+
+  // ---- Audit log ----
+  function renderAuditLog() {
+    auditCount.textContent = auditLog.length + ' event' + (auditLog.length !== 1 ? 's' : '');
+    if (auditLog.length === 0) {
+      auditEmpty.style.display = '';
+      auditTable.style.display = 'none';
+      return;
+    }
+    auditEmpty.style.display = 'none';
+    auditTable.style.display = '';
+    auditTableBody.innerHTML = auditLog.map((e, i) => `
+      <tr>
+        <td style="font-family:var(--mono); font-size:12px;">${escHtml(e.timestamp)}</td>
+        <td>${escHtml(e.eventType)}</td>
+        <td style="font-family:var(--mono);">${escHtml(String(e.resultId))}</td>
+        <td>${escHtml(e.status)}</td>
+        <td><span class="badge ${e.signatureValid ? 'valid' : 'invalid'}">${e.signatureValid ? 'Valid' : 'Invalid'}${e.tampered ? ' (Tampered)' : ''}</span></td>
+        <td><span class="badge ${e.traxClass}">${escHtml(e.traxMapping)}</span></td>
+      </tr>`
+    ).join('');
+  }
+
+  // ---- Helpers ----
+  function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function truncate(str, len) {
+    return str.length > len ? str.substring(0, len) : str;
+  }
+
+  function delay(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  }
+
+  function formatHeaders(headers) {
+    return Object.entries(headers).map(([k, v]) =>
+      `<span class="header-name">${escHtml(k)}</span>: <span class="header-value">${escHtml(v)}</span>`
+    ).join('\n');
+  }
+
+  function syntaxHighlightJson(jsonStr) {
+    let pretty;
+    try { pretty = JSON.stringify(JSON.parse(jsonStr), null, 2); } catch { pretty = jsonStr; }
+    return pretty
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"([^"]+)"(\s*:)/g, '<span class="key">"$1"</span>$2')
+      .replace(/: "([^"]*)"/g, ': <span class="string">"$1"</span>')
+      .replace(/: (\d+\.?\d*)/g, ': <span class="number">$1</span>')
+      .replace(/: (true|false)/g, ': <span class="bool">$1</span>')
+      .replace(/: (null)/g, ': <span class="null">$1</span>');
+  }
+
+})();
+</script>
+</body>
+</html>
