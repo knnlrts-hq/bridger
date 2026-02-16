@@ -533,5 +533,77 @@ const SampleData = (() => {
     return entities;
   }
 
-  return { SAMPLES, parsePain001, paymentToEntities };
+  // --- Generate pain.002.001.03 (Payment Status Report) from screening results ---
+  // This represents the Trax layer transforming Bridger screening results back
+  // into ISO 20022 pain.002.001.03 format for upstream consumption.
+  function generatePain002(screeningResults, originalParsed) {
+    const now = new Date().toISOString().replace(/\.\d+Z$/, '');
+    const statusMsgId = 'STAT-' + (originalParsed.header.msgId || 'UNKNOWN') + '-' + Date.now();
+
+    // Map Trax external status to ISO 20022 status codes
+    function toIso20022Status(traxStatus) {
+      switch (traxStatus) {
+        case 'EXTERNAL_ACCEPTED': return { code: 'ACCP', reason: '', description: 'AcceptedCustomerProfile' };
+        case 'EXTERNAL_REJECTED': return { code: 'RJCT', reason: 'NAUT', description: 'NotAuthorised – Sanctions match' };
+        case 'EXTERNAL_SUSPECT':  return { code: 'PDNG', reason: 'COMP', description: 'Pending – Compliance review required' };
+        default:                  return { code: 'PDNG', reason: 'NARR', description: 'Pending' };
+      }
+    }
+
+    // Build transaction status entries
+    let txnStatuses = '';
+    for (const payment of screeningResults.payments) {
+      const iso = toIso20022Status(payment.traxStatus);
+      let reasonBlock = '';
+      if (iso.reason) {
+        reasonBlock = `
+        <StsRsnInf>
+          <Rsn><Cd>${escXml(iso.reason)}</Cd></Rsn>
+          <AddtlInf>${escXml(iso.description)}</AddtlInf>
+        </StsRsnInf>`;
+      }
+      txnStatuses += `
+      <TxInfAndSts>
+        <OrgnlEndToEndId>${escXml(payment.ref)}</OrgnlEndToEndId>
+        <TxSts>${escXml(iso.code)}</TxSts>${reasonBlock}
+      </TxInfAndSts>`;
+    }
+
+    // Determine overall group status
+    const allAccepted = screeningResults.payments.every(p => p.traxStatus === 'EXTERNAL_ACCEPTED');
+    const anyRejected = screeningResults.payments.some(p => p.traxStatus === 'EXTERNAL_REJECTED');
+    const grpSts = allAccepted ? 'ACCP' : anyRejected ? 'PART' : 'PDNG';
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.03" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <CstmrPmtStsRpt>
+    <GrpHdr>
+      <MsgId>${escXml(statusMsgId)}</MsgId>
+      <CreDtTm>${escXml(now)}</CreDtTm>
+      <InitgPty>
+        <Nm>${escXml(originalParsed.header.initgPty || 'Payment Hub')}</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <OrgnlGrpInfAndSts>
+      <OrgnlMsgId>${escXml(originalParsed.header.msgId)}</OrgnlMsgId>
+      <OrgnlMsgNmId>pain.001.001.03</OrgnlMsgNmId>
+      <OrgnlNbOfTxs>${escXml(originalParsed.header.nbOfTxs)}</OrgnlNbOfTxs>
+      <GrpSts>${escXml(grpSts)}</GrpSts>
+    </OrgnlGrpInfAndSts>
+    <OrgnlPmtInfAndSts>
+      <OrgnlPmtInfId>${escXml(originalParsed.batches[0]?.pmtInfId || 'UNKNOWN')}</OrgnlPmtInfId>
+      <PmtInfSts>${escXml(grpSts)}</PmtInfSts>${txnStatuses}
+    </OrgnlPmtInfAndSts>
+  </CstmrPmtStsRpt>
+</Document>`;
+
+    return xml;
+  }
+
+  function escXml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  return { SAMPLES, parsePain001, paymentToEntities, generatePain002 };
 })();

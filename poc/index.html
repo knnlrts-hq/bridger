@@ -153,7 +153,7 @@ body {
 
 <div class="hero">
   <h1>Bridger XG5 Integration POC</h1>
-  <p>End-to-end demo of LexisNexis Bridger Insight XG5 sanctions screening integrated with a corporate payment factory processing <code>pain.001.001.03</code> files.</p>
+  <p>End-to-end demo of LexisNexis Bridger Insight XG5 sanctions screening integrated with a corporate payment factory. The Trax layer handles <code>pain.001.001.03</code> parsing, transformation to Bridger format, and building <code>pain.002.001.03</code> status reports from screening results.</p>
   <p class="subtitle">All Bridger API endpoints and webhooks are mocked in-browser. No backend required.</p>
 </div>
 
@@ -188,11 +188,12 @@ body {
     <a href="03-screening-flow.html" class="tool-card">
       <div class="tool-number">3</div>
       <h3>Screening Flow Simulator</h3>
-      <p>The main event. Load a pain.001 file, watch the full pipeline: parse, authenticate, screen, apply thresholds, assign Trax statuses. Animated end-to-end.</p>
+      <p>The main event. The Trax layer parses pain.001 into Bridger entities, screens them, applies thresholds, and builds a pain.002 status report. Animated end-to-end.</p>
       <div class="tags">
         <span class="tag">E2E Pipeline</span>
-        <span class="tag">Thresholds</span>
-        <span class="tag">Trax Statuses</span>
+        <span class="tag">pain.001 &rarr; Bridger</span>
+        <span class="tag">Bridger &rarr; pain.002</span>
+        <span class="tag">Trax Layer</span>
       </div>
     </a>
 
@@ -226,19 +227,19 @@ body {
       <div class="flow-step">
         <div class="icon">1</div>
         <div class="label">Parse pain.001</div>
-        <div class="sublabel">Extract parties</div>
+        <div class="sublabel">Trax: extract parties</div>
       </div>
       <div class="flow-arrow">&rarr;</div>
       <div class="flow-step">
         <div class="icon">2</div>
         <div class="label">Explore API</div>
-        <div class="sublabel">Learn endpoints</div>
+        <div class="sublabel">Bridger endpoints</div>
       </div>
       <div class="flow-arrow">&rarr;</div>
       <div class="flow-step">
         <div class="icon">3</div>
         <div class="label">Run Screening</div>
-        <div class="sublabel">E2E pipeline</div>
+        <div class="sublabel">Trax transforms E2E</div>
       </div>
       <div class="flow-arrow">&rarr;</div>
       <div class="flow-step">
@@ -250,7 +251,7 @@ body {
       <div class="flow-step">
         <div class="icon">5</div>
         <div class="label">Review Alerts</div>
-        <div class="sublabel">Make decisions</div>
+        <div class="sublabel">pain.002 output</div>
       </div>
     </div>
   </div>
@@ -258,20 +259,23 @@ body {
   <div class="arch-section">
     <h3>Architecture</h3>
     <pre>
-ERP / Payment Factory          Bank Connector              Bridger XG5 (Mocked)
+ERP / Payment Factory       Trax Layer (Payment Hub)        Bridger XG5 (Mocked)
        |                            |                            |
-  pain.001.001.03 ──────────► Parse & Extract ──────────► Token/Issue
-       |                      Parties             ──────► Lists/Search
-       |                            |              ◄────── SearchResults
-       |                     Apply Thresholds               |
-       |                            |                       |
-  Trax Status ◄──────────── EXTERNAL_ACCEPTED        Webhook Events
-  (ACCEPTED/                 EXTERNAL_REJECTED     ──► AlertStateClosed
-   REJECTED/                 EXTERNAL_SUSPECT      ──► AlertDecisionApplied
-   SUSPECT)                         |                       |
-       |                     Compliance Review    ◄── HMAC-SHA256 Signed
-       |                     Dashboard                      |
-       ◄──────────────────── Final Decision ────────────────┘
+  pain.001.001.03 ──────────► Parse pain.001              Token/Issue
+       |                      Transform to            ──────► Lists/Search
+       |                      Bridger entity format   ◄────── SearchResults
+       |                            |                            |
+       |                     Apply Thresholds                    |
+       |                     (auto-accept / suspect / reject)    |
+       |                            |                            |
+       |                     Transform results to          Webhook Events
+       |                      pain.002.001.03            ──► AlertStateClosed
+       |                      (Payment Status Report)    ──► AlertDecisionApplied
+       |                            |                            |
+  pain.002.001.03 ◄──────── ACCP / RJCT / PDNG    Compliance Review
+  (Status Report)                   |               ◄── HMAC-SHA256 Signed
+       |                     Compliance Dashboard                |
+       ◄──────────────────── Final Decision ─────────────────────┘
     </pre>
   </div>
 </div>
