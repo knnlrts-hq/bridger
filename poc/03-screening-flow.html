@@ -584,7 +584,7 @@
 
 <div class="container">
   <h1 class="page-title">E2E Screening Flow</h1>
-  <p class="page-subtitle">Parse payment files, screen parties against sanctions lists, and apply threshold rules in one visual pipeline.</p>
+  <p class="page-subtitle">Trax layer parses pain.001 and transforms to Bridger format, screens parties, applies rules, and builds a pain.002 status report.</p>
 
   <!-- Session data notice (shown if data found) -->
   <div id="sessionNotice" class="session-notice hidden">
@@ -641,11 +641,11 @@
   <div class="card">
     <div class="card-title"><span class="icon">&#9881;</span> Screening Pipeline</div>
     <div class="pipeline" id="pipeline">
-      <!-- Step 1: Parse -->
+      <!-- Step 1: Trax Parse & Transform -->
       <div class="pipeline-step" id="step-parse">
         <div class="pipeline-node" id="node-parse">&#128196;</div>
-        <div class="pipeline-label">Parse XML</div>
-        <div class="pipeline-status" id="status-parse"></div>
+        <div class="pipeline-label">Trax: Parse</div>
+        <div class="pipeline-status" id="status-parse">pain.001 &rarr; Bridger</div>
       </div>
       <div class="pipeline-connector" id="conn-1"></div>
       <!-- Step 2: Auth -->
@@ -669,11 +669,11 @@
         <div class="pipeline-status" id="status-rules"></div>
       </div>
       <div class="pipeline-connector" id="conn-4"></div>
-      <!-- Step 5: Status -->
+      <!-- Step 5: Trax Build pain.002 -->
       <div class="pipeline-step" id="step-status">
         <div class="pipeline-node" id="node-status">&#9989;</div>
-        <div class="pipeline-label">Assign Status</div>
-        <div class="pipeline-status" id="status-status"></div>
+        <div class="pipeline-label">Trax: pain.002</div>
+        <div class="pipeline-status" id="status-status">Bridger &rarr; pain.002</div>
       </div>
     </div>
     <div class="run-btn-row">
@@ -709,6 +709,19 @@
         &#128270; Review Suspects
       </button>
     </div>
+  </div>
+
+  <!-- ===== PAIN.002 OUTPUT ===== -->
+  <div class="card hidden" id="pain002Card">
+    <div class="card-title"><span class="icon">&#128230;</span> Trax Layer Output: pain.002.001.03</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
+      The Trax layer transforms Bridger screening results back into ISO 20022 <strong>pain.002.001.03</strong> (Customer Payment Status Report) for upstream consumption by the originating ERP / payment factory.
+    </p>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="btn btn-secondary" onclick="copyPain002()">&#128203; Copy XML</button>
+      <button class="btn btn-secondary" onclick="togglePain002()">&#128065; Toggle View</button>
+    </div>
+    <pre id="pain002Output" style="background:#1e293b;color:#e2e8f0;padding:16px;border-radius:8px;font-size:12px;overflow-x:auto;line-height:1.5;max-height:400px;overflow-y:auto;display:none;"></pre>
   </div>
 
 </div>
@@ -875,7 +888,7 @@
     resetPipeline();
 
     try {
-      // === Step 1: Parse ===
+      // === Step 1: Trax Layer – Parse pain.001 & Transform to Bridger format ===
       activateStep('parse');
       await delay(500);
       var parsed;
@@ -887,7 +900,7 @@
       }
       var txnCount = 0;
       parsed.batches.forEach(function (b) { txnCount += b.transactions.length; });
-      completeStep('parse', 'Parsed ' + txnCount + ' transaction' + (txnCount !== 1 ? 's' : ''));
+      completeStep('parse', txnCount + ' txn' + (txnCount !== 1 ? 's' : '') + ' \u2192 Bridger entities');
 
       // Connector 1
       activateConnector('1');
@@ -958,7 +971,7 @@
       await delay(400);
       completeConnector('4');
 
-      // === Step 5: Assign Status ===
+      // === Step 5: Trax Layer – Build pain.002.001.03 Status Report ===
       activateStep('status');
       await delay(500);
 
@@ -1027,7 +1040,7 @@
         else pSuspect++;
       });
 
-      completeStep('status', pAccepted + ' accepted, ' + pSuspect + ' suspect, ' + pRejected + ' rejected');
+      completeStep('status', pAccepted + 'A/' + pSuspect + 'S/' + pRejected + 'R \u2192 pain.002 built');
 
       // Store results
       screeningResults = {
@@ -1037,6 +1050,10 @@
         summary: { accepted: pAccepted, rejected: pRejected, suspect: pSuspect, total: payments.length },
         thresholds: thresholds
       };
+
+      // Generate pain.002.001.03 status report (Trax layer output)
+      var pain002Xml = SampleData.generatePain002(screeningResults, parsed);
+      screeningResults.pain002Xml = pain002Xml;
 
       // Save to sessionStorage
       try {
@@ -1135,6 +1152,18 @@
       reviewBtnRow.classList.add('hidden');
     }
 
+    // Show pain.002 card if XML was generated
+    var pain002Card = document.getElementById('pain002Card');
+    var pain002Output = document.getElementById('pain002Output');
+    if (data.pain002Xml) {
+      pain002Card.classList.remove('hidden');
+      pain002Card.classList.add('fade-in');
+      pain002Output.textContent = data.pain002Xml;
+      pain002Output.style.display = 'block';
+    } else {
+      pain002Card.classList.add('hidden');
+    }
+
     // Scroll results into view
     setTimeout(function () {
       resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1155,6 +1184,18 @@
       parentRow.classList.remove('expanded');
     }
   }
+
+  // --- pain.002 panel helpers ---
+  window.togglePain002 = function () {
+    var el = document.getElementById('pain002Output');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  };
+  window.copyPain002 = function () {
+    if (!screeningResults || !screeningResults.pain002Xml) return;
+    navigator.clipboard.writeText(screeningResults.pain002Xml).then(function () {
+      alert('pain.002 XML copied to clipboard.');
+    });
+  };
 
   // --- Review suspects ---
   window.reviewSuspects = function () {
