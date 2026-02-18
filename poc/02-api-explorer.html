@@ -94,6 +94,9 @@
     font-size: 14px;
     margin-bottom: 24px;
   }
+  .text-muted { color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-16 { margin-bottom: 16px; }
 
   /* --- Tabs --- */
   .tab-bar {
@@ -495,19 +498,19 @@
 
 <!-- Nav Bar -->
 <nav class="navbar">
-  <div class="navbar-brand">Bridger POC</div>
+  <a href="index.html" class="navbar-brand" style="color:#fff;text-decoration:none;">Bridger POC</a>
   <ul class="navbar-links">
-    <li><a href="01-payment-parser.html">Payment Parser</a></li>
-    <li><a href="02-api-explorer.html" class="active">API Explorer</a></li>
-    <li><a href="03-screening-flow.html">Screening Flow</a></li>
-    <li><a href="04-webhook-tester.html">Webhook Tester</a></li>
-    <li><a href="05-end-to-end.html">End-to-End Demo</a></li>
+    <li><a href="01-pain001-parser.html">01 Parser</a></li>
+    <li><a href="02-api-explorer.html" class="active">02 API Explorer</a></li>
+    <li><a href="03-screening-flow.html">03 Screening</a></li>
+    <li><a href="04-webhook-simulator.html">04 Webhooks</a></li>
+    <li><a href="05-compliance-dashboard.html">05 Compliance</a></li>
   </ul>
 </nav>
 
 <div class="container">
-  <h1 class="page-title">API Explorer</h1>
-  <p class="page-subtitle">Interactive exploration of the Bridger XG5 REST API endpoints</p>
+  <h1 class="page-title">Bridger API Explorer</h1>
+  <p class="page-subtitle">Explore the Bridger XG5 REST API as Bank Connector would call it. Token/Issue for JWT authentication (with X-API-Key), Lists/Search for synchronous entity screening, Results for alert management, and Lists/DataFiles for list discovery.</p>
 
   <!-- Token Status Bar -->
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -527,7 +530,8 @@
   <!-- =============================== TOKEN TAB =============================== -->
   <div id="tab-token" class="tab-panel active">
     <div class="card">
-      <div class="card-title">POST /api/Token/Issue <span class="badge">Authentication</span></div>
+      <div class="card-title">POST /api/Token/Issue <span class="badge">HTTP Basic Auth</span></div>
+      <p class="text-muted mb-8">Uses HTTP Basic auth: <code>Authorization: Basic Base64("clientId/userId:password")</code>. Returns a JWT bearer token. All subsequent calls require this JWT plus the <code>X-API-Key</code> header.</p>
       <div class="form-grid">
         <div class="form-group">
           <label>Client ID</label>
@@ -540,6 +544,10 @@
         <div class="form-group">
           <label>Password</label>
           <input type="password" id="tokenPassword" value="P@ssw0rd!">
+        </div>
+        <div class="form-group">
+          <label>X-API-Key</label>
+          <input type="text" id="tokenApiKey" value="mock-api-key-2026" placeholder="Client instance API key">
         </div>
       </div>
       <div class="btn-row">
@@ -555,6 +563,7 @@
   <!-- =============================== SEARCH TAB =============================== -->
   <div id="tab-search" class="tab-panel">
 
+    <p class="text-muted mb-16" style="padding:0 4px;">POST /api/Lists/Search &mdash; the primary screening endpoint. <strong>Synchronous:</strong> results are returned in the same HTTP response, no polling required. When <code>WriteResultsToDatabase: true</code>, alerts are also persisted to XG for case management. Requires <code>Authorization: Bearer &lt;JWT&gt;</code> and <code>X-API-Key</code> headers.</p>
     <!-- Client Context -->
     <div class="card">
       <div class="card-title">Client Context</div>
@@ -645,7 +654,7 @@
 
     <!-- Search Records -->
     <div class="card">
-      <div class="card-title">Search Records <span class="badge">resultsSearchRecords</span></div>
+      <div class="card-title">POST /api/Results/SearchRecords <span class="badge">Query alerts by criteria</span></div>
       <div class="form-grid">
         <div class="form-group">
           <label>Run ID</label>
@@ -675,7 +684,7 @@
 
     <!-- Single Record Lookup -->
     <div class="card">
-      <div class="card-title">Single Record Lookup <span class="badge">resultsRecord</span></div>
+      <div class="card-title">POST /api/Results/Records <span class="badge">Fetch alerts by ID</span></div>
       <div class="form-grid">
         <div class="form-group">
           <label>Result ID</label>
@@ -693,7 +702,7 @@
 
     <!-- Set Record State -->
     <div class="card">
-      <div class="card-title">Set Record State <span class="badge">resultsSetRecordState</span></div>
+      <div class="card-title">POST /api/Results/SetRecordState <span class="badge">Update alert state &mdash; triggers webhooks</span></div>
       <div class="form-grid">
         <div class="form-group">
           <label>Result ID</label>
@@ -728,7 +737,7 @@
   <!-- =============================== LISTS TAB =============================== -->
   <div id="tab-lists" class="tab-panel">
     <div class="card">
-      <div class="card-title">Screening Data Files <span class="badge">listsDataFiles</span></div>
+      <div class="card-title">POST /api/Lists/DataFiles <span class="badge">Discover available screening lists</span></div>
       <div class="btn-row mb-16">
         <button class="btn btn-primary" id="btnLoadDataFiles">Load Data Files</button>
       </div>
@@ -825,12 +834,27 @@
     var clientId = document.getElementById('tokenClientId').value;
     var userId = document.getElementById('tokenUserId').value;
     var password = document.getElementById('tokenPassword').value;
+    var apiKey = document.getElementById('tokenApiKey') ? document.getElementById('tokenApiKey').value : '';
     var result = MockBridger.tokenIssue(clientId, userId, password);
     if (result.access_token) {
       currentToken = result.access_token;
     }
+    // Show the full request info including Basic auth header
+    var basicCreds = btoa(clientId + '/' + userId + ':' + password);
+    var requestInfo = {
+      _request: {
+        method: 'POST',
+        url: '/api/Token/Issue',
+        headers: {
+          'Authorization': 'Basic ' + basicCreds,
+          'X-API-Key': apiKey || '(not set)',
+          'Content-Type': 'application/json'
+        }
+      },
+      _response: result
+    };
     updateTokenStatus();
-    showJson('tokenResponse', result);
+    showJson('tokenResponse', requestInfo);
   });
 
   // --- SEARCH TAB: Entity Management ---

@@ -774,13 +774,13 @@
 
 <!-- Top Navigation -->
 <div class="top-nav">
-  <div class="brand">Bridger <span>POC</span></div>
+  <a href="index.html" class="brand" style="text-decoration:none;">Bridger <span>POC</span></a>
   <nav>
-    <a href="01-pain001-parser.html">01 pain.001 Parser</a>
+    <a href="01-pain001-parser.html">01 Parser</a>
     <a href="02-api-explorer.html">02 API Explorer</a>
-    <a href="03-screening-flow.html">03 Screening Flow</a>
-    <a href="04-webhook-simulator.html">04 Webhook Simulator</a>
-    <a href="05-compliance-dashboard.html" class="active">05 Compliance Dashboard</a>
+    <a href="03-screening-flow.html">03 Screening</a>
+    <a href="04-webhook-simulator.html">04 Webhooks</a>
+    <a href="05-compliance-dashboard.html" class="active">05 Compliance</a>
   </nav>
 </div>
 
@@ -793,7 +793,7 @@
   <!-- Page Header -->
   <div class="page-header">
     <h1 class="page-title">Compliance Review Dashboard</h1>
-    <p class="page-subtitle">Review screening alerts, make accept/reject/escalate decisions, and generate downstream Trax webhook events.</p>
+    <p class="page-subtitle">Compliance officer workflow within Payment Hub. Review SUSPECT alerts from External Screening, make accept/reject/escalate decisions (updating Bridger via SetRecordState), and track webhook events (AlertStateClosed / AlertDecisionApplied) with full audit trail.</p>
   </div>
 
   <!-- Stats Bar -->

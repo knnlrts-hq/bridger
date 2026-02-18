@@ -104,12 +104,16 @@ const MockBridger = (() => {
       exp: Math.floor(Date.now() / 1000) + 3600,
       client_id: clientId
     })) + '.mock-signature-' + Date.now();
+    const now = Math.floor(Date.now() / 1000);
     const entry = { token, expiresAt: Date.now() + 3600000 };
     tokens.set(token, entry);
     return {
       access_token: token,
       token_type: 'bearer',
-      expires_in: 3600
+      expires_in: 3600,
+      expires_on: now + 3600,
+      not_before: now,
+      resource: `https://mock-xg5.example.com/LN.WebServices`
     };
   }
 

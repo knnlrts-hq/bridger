@@ -487,20 +487,20 @@
 
 <!-- Top Navigation -->
 <div class="top-nav">
-  <div class="brand">Bridger <span>POC</span></div>
+  <a href="index.html" class="brand">Bridger <span>POC</span></a>
   <nav>
-    <a href="01-pain001-parser.html" class="active">01 pain.001 Parser</a>
+    <a href="01-pain001-parser.html" class="active">01 Parser</a>
     <a href="02-api-explorer.html">02 API Explorer</a>
-    <a href="03-screening-flow.html">03 Screening Flow</a>
-    <a href="04-webhook-simulator.html">04 Webhook Simulator</a>
-    <a href="05-compliance-dashboard.html">05 Compliance Dashboard</a>
+    <a href="03-screening-flow.html">03 Screening</a>
+    <a href="04-webhook-simulator.html">04 Webhooks</a>
+    <a href="05-compliance-dashboard.html">05 Compliance</a>
   </nav>
 </div>
 
 <!-- Main Content -->
 <div class="container">
   <h1 class="page-title">ISO 20022 pain.001 Parser</h1>
-  <p class="page-subtitle">Paste or upload a pain.001.001.03 Customer Credit Transfer Initiation XML file to parse and inspect its contents.</p>
+  <p class="page-subtitle">Simulate the first step: a pain.001.001.03 Customer Credit Transfer Initiation arrives from the corporate ERP backoffice into Payment Hub. Parse and inspect its contents &mdash; extract all screenable parties (debtor, creditor, ultimate creditor) for downstream screening.</p>
 
   <!-- Input Card -->
   <div class="card">
@@ -832,7 +832,7 @@
         '<strong>' + partyCount + ' screenable ' + (partyCount !== 1 ? 'parties' : 'party') + '</strong>.' +
       '</div>' +
       '<button class="btn btn-success" id="sendToScreening">' +
-        'Send to Screening &#8594;' +
+        'Send to Payment Hub Screening &#8594;' +
       '</button>' +
     '</div>';
   }
