@@ -283,7 +283,7 @@
     flex-direction: column;
     align-items: center;
     flex-shrink: 0;
-    min-width: 140px;
+    min-width: 110px;
   }
   .pipeline-node {
     width: 56px;
@@ -349,7 +349,7 @@
   .pipeline-step.active .pipeline-status { color: var(--primary); }
 
   .pipeline-connector {
-    width: 48px;
+    width: 32px;
     height: 3px;
     background: var(--border);
     margin-top: 28px;
@@ -572,19 +572,19 @@
 
 <!-- Navigation -->
 <nav class="nav">
-  <div class="nav-brand">Bridger XG5 POC</div>
+  <a href="index.html" class="nav-brand" style="color:#fff;text-decoration:none;">Bridger XG5 POC</a>
   <ul class="nav-links">
-    <li><a href="01-pain001-viewer.html">1. XML Viewer</a></li>
-    <li><a href="02-api-explorer.html">2. API Explorer</a></li>
-    <li><a href="03-screening-flow.html" class="active">3. Screening Flow</a></li>
-    <li><a href="04-webhook-tester.html">4. Webhook Tester</a></li>
-    <li><a href="05-compliance-dashboard.html">5. Dashboard</a></li>
+    <li><a href="01-pain001-parser.html">01 Parser</a></li>
+    <li><a href="02-api-explorer.html">02 API Explorer</a></li>
+    <li><a href="03-screening-flow.html" class="active">03 Screening</a></li>
+    <li><a href="04-webhook-simulator.html">04 Webhooks</a></li>
+    <li><a href="05-compliance-dashboard.html">05 Compliance</a></li>
   </ul>
 </nav>
 
 <div class="container">
   <h1 class="page-title">E2E Screening Flow</h1>
-  <p class="page-subtitle">Trax layer parses pain.001 and transforms to Bridger format, screens parties, applies rules, and builds a pain.002 status report.</p>
+  <p class="page-subtitle">Simulates the full pipeline: pain.001 from ERP &rarr; Payment Hub (External Screening) extracts parties &rarr; Queue &rarr; Bank Connector authenticates &amp; calls Bridger API &rarr; response flows back via Queue &rarr; Payment Hub builds pain.002 and maps statuses to External Screening.</p>
 
   <!-- Session data notice (shown if data found) -->
   <div id="sessionNotice" class="session-notice hidden">
@@ -641,39 +641,53 @@
   <div class="card">
     <div class="card-title"><span class="icon">&#9881;</span> Screening Pipeline</div>
     <div class="pipeline" id="pipeline">
-      <!-- Step 1: Trax Parse & Transform -->
+      <!-- Step 1: Payment Hub - Parse & Extract -->
       <div class="pipeline-step" id="step-parse">
         <div class="pipeline-node" id="node-parse">&#128196;</div>
-        <div class="pipeline-label">Trax: Parse</div>
-        <div class="pipeline-status" id="status-parse">pain.001 &rarr; Bridger</div>
+        <div class="pipeline-label">Payment Hub</div>
+        <div class="pipeline-status" id="status-parse">Parse &amp; extract</div>
       </div>
       <div class="pipeline-connector" id="conn-1"></div>
-      <!-- Step 2: Auth -->
-      <div class="pipeline-step" id="step-auth">
-        <div class="pipeline-node" id="node-auth">&#128274;</div>
-        <div class="pipeline-label">Authenticate</div>
-        <div class="pipeline-status" id="status-auth"></div>
+      <!-- Step 2: Queue Out -->
+      <div class="pipeline-step" id="step-queue">
+        <div class="pipeline-node" id="node-queue">&#128233;</div>
+        <div class="pipeline-label">Queue</div>
+        <div class="pipeline-status" id="status-queue">To Bank Connector</div>
       </div>
       <div class="pipeline-connector" id="conn-2"></div>
-      <!-- Step 3: Screen -->
-      <div class="pipeline-step" id="step-screen">
-        <div class="pipeline-node" id="node-screen">&#128269;</div>
-        <div class="pipeline-label">Screen Parties</div>
-        <div class="pipeline-status" id="status-screen"></div>
+      <!-- Step 3: Bank Connector - Auth + Call -->
+      <div class="pipeline-step" id="step-auth">
+        <div class="pipeline-node" id="node-auth">&#128274;</div>
+        <div class="pipeline-label">Bank Connector</div>
+        <div class="pipeline-status" id="status-auth">Auth &amp; API call</div>
       </div>
       <div class="pipeline-connector" id="conn-3"></div>
-      <!-- Step 4: Rules -->
+      <!-- Step 4: Bridger API Screen -->
+      <div class="pipeline-step" id="step-screen">
+        <div class="pipeline-node" id="node-screen">&#128269;</div>
+        <div class="pipeline-label">Bridger API</div>
+        <div class="pipeline-status" id="status-screen">Lists/Search</div>
+      </div>
+      <div class="pipeline-connector" id="conn-4"></div>
+      <!-- Step 5: Response back via queue -->
+      <div class="pipeline-step" id="step-response">
+        <div class="pipeline-node" id="node-response">&#128229;</div>
+        <div class="pipeline-label">Response Queue</div>
+        <div class="pipeline-status" id="status-response">Back to Hub</div>
+      </div>
+      <div class="pipeline-connector" id="conn-5"></div>
+      <!-- Step 6: Apply Thresholds -->
       <div class="pipeline-step" id="step-rules">
         <div class="pipeline-node" id="node-rules">&#9878;</div>
         <div class="pipeline-label">Apply Rules</div>
-        <div class="pipeline-status" id="status-rules"></div>
+        <div class="pipeline-status" id="status-rules">Thresholds</div>
       </div>
-      <div class="pipeline-connector" id="conn-4"></div>
-      <!-- Step 5: Trax Build pain.002 -->
+      <div class="pipeline-connector" id="conn-6"></div>
+      <!-- Step 7: Payment Hub - Build pain.002 & Map to Ext Screening -->
       <div class="pipeline-step" id="step-status">
         <div class="pipeline-node" id="node-status">&#9989;</div>
-        <div class="pipeline-label">Trax: pain.002</div>
-        <div class="pipeline-status" id="status-status">Bridger &rarr; pain.002</div>
+        <div class="pipeline-label">pain.002</div>
+        <div class="pipeline-status" id="status-status">Ext Screening map</div>
       </div>
     </div>
     <div class="run-btn-row">
@@ -713,9 +727,9 @@
 
   <!-- ===== PAIN.002 OUTPUT ===== -->
   <div class="card hidden" id="pain002Card">
-    <div class="card-title"><span class="icon">&#128230;</span> Trax Layer Output: pain.002.001.03</div>
+    <div class="card-title"><span class="icon">&#128230;</span> Payment Hub Output: pain.002.001.03</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
-      The Trax layer transforms Bridger screening results back into ISO 20022 <strong>pain.002.001.03</strong> (Customer Payment Status Report) for upstream consumption by the originating ERP / payment factory.
+      Payment Hub transforms the Bridger screening results (received via Bank Connector and Internal Queue) into an ISO 20022 <strong>pain.002.001.03</strong> (Customer Payment Status Report). Each payment's status (ACCP/RJCT/PDNG) is mapped to the External Screening module status (EXTERNAL_ACCEPTED/EXTERNAL_REJECTED/EXTERNAL_SUSPECT) for upstream consumption by the originating ERP backoffice.
     </p>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="btn btn-secondary" onclick="copyPain002()">&#128203; Copy XML</button>
@@ -754,8 +768,8 @@
   const sessionNotice = document.getElementById('sessionNotice');
   const sessionNoticeText = document.getElementById('sessionNoticeText');
 
-  const stepIds = ['parse', 'auth', 'screen', 'rules', 'status'];
-  const connIds = ['1', '2', '3', '4'];
+  const stepIds = ['parse', 'queue', 'auth', 'screen', 'response', 'rules', 'status'];
+  const connIds = ['1', '2', '3', '4', '5', '6'];
 
   // --- Threshold bar sync ---
   function updateThresholdVisual() {
@@ -888,7 +902,7 @@
     resetPipeline();
 
     try {
-      // === Step 1: Trax Layer – Parse pain.001 & Transform to Bridger format ===
+      // === Step 1: Payment Hub — External Screening: Parse pain.001 & Extract parties ===
       activateStep('parse');
       await delay(500);
       var parsed;
@@ -900,14 +914,25 @@
       }
       var txnCount = 0;
       parsed.batches.forEach(function (b) { txnCount += b.transactions.length; });
-      completeStep('parse', txnCount + ' txn' + (txnCount !== 1 ? 's' : '') + ' \u2192 Bridger entities');
+      var entities = SampleData.paymentToEntities(parsed);
+      completeStep('parse', txnCount + ' txn' + (txnCount !== 1 ? 's' : '') + ', ' + entities.length + ' entities extracted');
 
       // Connector 1
       activateConnector('1');
-      await delay(400);
+      await delay(350);
       completeConnector('1');
 
-      // === Step 2: Authenticate ===
+      // === Step 2: Internal Queue — Push payload to Bank Connector ===
+      activateStep('queue');
+      await delay(400);
+      completeStep('queue', 'JSON payload queued');
+
+      // Connector 2
+      activateConnector('2');
+      await delay(350);
+      completeConnector('2');
+
+      // === Step 3: Bank Connector — Authenticate & call Bridger API ===
       activateStep('auth');
       await delay(500);
       var authResult = MockBridger.tokenIssue('poc-client', 'screening-user', 'demo-pass-2026');
@@ -915,22 +940,22 @@
         errorStep('auth', 'Auth failed');
         throw new Error(authResult.error.Message);
       }
-      var tokenPreview = authResult.access_token.substring(0, 24) + '...';
-      completeStep('auth', 'Token: ' + tokenPreview);
+      var tokenPreview = authResult.access_token.substring(0, 20) + '...';
+      completeStep('auth', 'JWT + X-API-Key ready');
 
-      // Connector 2
-      activateConnector('2');
-      await delay(400);
-      completeConnector('2');
+      // Connector 3
+      activateConnector('3');
+      await delay(350);
+      completeConnector('3');
 
-      // === Step 3: Screen Parties ===
+      // === Step 4: Bridger API — Lists/Search (synchronous) ===
       activateStep('screen');
       await delay(600);
-      var entities = SampleData.paymentToEntities(parsed);
       var searchRequest = {
         EntitySearchRequest: {
           Configuration: {
             PredefinedSearchName: 'POC_Screening',
+            WriteResultsToDatabase: true,
             AssignResultTo: { Division: 'Compliance', RolesOrUsers: ['ComplianceTeam'], Type: 'Role' }
           },
           Input: {
@@ -942,14 +967,24 @@
       };
       var searchResults = MockBridger.listsSearch(searchRequest);
       var matchCount = searchResults.SearchResults.Records.filter(function (r) { return r.HasScreeningListMatches; }).length;
-      completeStep('screen', matchCount + ' match' + (matchCount !== 1 ? 'es' : '') + ' found');
+      completeStep('screen', matchCount + ' match' + (matchCount !== 1 ? 'es' : '') + ' (sync)');
 
-      // Connector 3
-      activateConnector('3');
+      // Connector 4
+      activateConnector('4');
+      await delay(350);
+      completeConnector('4');
+
+      // === Step 5: Response Queue — Bank Connector passes response back to Payment Hub ===
+      activateStep('response');
       await delay(400);
-      completeConnector('3');
+      completeStep('response', 'SearchResults returned');
 
-      // === Step 4: Apply Rules ===
+      // Connector 5
+      activateConnector('5');
+      await delay(350);
+      completeConnector('5');
+
+      // === Step 6: Payment Hub — Apply Thresholds ===
       activateStep('rules');
       await delay(500);
       var thresholds = {
@@ -966,12 +1001,12 @@
       });
       completeStep('rules', acceptCount + 'A / ' + suspectCount + 'S / ' + rejectCount + 'R');
 
-      // Connector 4
-      activateConnector('4');
-      await delay(400);
-      completeConnector('4');
+      // Connector 6
+      activateConnector('6');
+      await delay(350);
+      completeConnector('6');
 
-      // === Step 5: Trax Layer – Build pain.002.001.03 Status Report ===
+      // === Step 7: Payment Hub — Build pain.002 & Map to External Screening status ===
       activateStep('status');
       await delay(500);
 
@@ -1040,7 +1075,7 @@
         else pSuspect++;
       });
 
-      completeStep('status', pAccepted + 'A/' + pSuspect + 'S/' + pRejected + 'R \u2192 pain.002 built');
+      completeStep('status', pAccepted + ' ACCP / ' + pSuspect + ' PDNG / ' + pRejected + ' RJCT \u2192 Ext Screening mapped');
 
       // Store results
       screeningResults = {
@@ -1051,7 +1086,7 @@
         thresholds: thresholds
       };
 
-      // Generate pain.002.001.03 status report (Trax layer output)
+      // Generate pain.002.001.03 status report (Payment Hub External Screening output)
       var pain002Xml = SampleData.generatePain002(screeningResults, parsed);
       screeningResults.pain002Xml = pain002Xml;
 

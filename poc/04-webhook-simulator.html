@@ -637,21 +637,21 @@
 
 <!-- Nav -->
 <nav class="nav">
-  <div class="nav-brand">
+  <a href="index.html" class="nav-brand" style="color:#fff;text-decoration:none;">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     Bridger XG5 POC
-  </div>
-  <a href="01-auth-explorer.html">Auth</a>
-  <a href="02-screening-workbench.html">Screening</a>
-  <a href="03-results-manager.html">Results</a>
-  <a href="04-webhook-simulator.html" class="active">Webhooks</a>
-  <a href="05-integration-dashboard.html">Integration</a>
+  </a>
+  <a href="01-pain001-parser.html">01 Parser</a>
+  <a href="02-api-explorer.html">02 API Explorer</a>
+  <a href="03-screening-flow.html">03 Screening</a>
+  <a href="04-webhook-simulator.html" class="active">04 Webhooks</a>
+  <a href="05-compliance-dashboard.html">05 Compliance</a>
 </nav>
 
 <div class="container">
   <div class="page-title">
     <h1>Webhook Signing &amp; Verification Simulator</h1>
-    <p>Demonstrates HMAC-SHA256 webhook authentication between Bridger XG5 and your Bank Connector</p>
+    <p>Demonstrates HMAC-SHA256 webhook authentication between Bridger XG5 and Bank Connector. Bridger fires webhooks on <strong>AlertStateClosed</strong> and <strong>AlertDecisionApplied</strong> events (triggered by SetRecordState). Bank Connector verifies the signature before processing.</p>
   </div>
 
   <!-- Two-Panel Layout -->
