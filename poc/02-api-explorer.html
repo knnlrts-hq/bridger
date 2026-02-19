@@ -274,6 +274,8 @@
     overflow-y: auto;
     white-space: pre-wrap;
     word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-all;
   }
   .json-output:empty::before {
     content: "Response will appear here...";
@@ -291,6 +293,9 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
+  }
+  .split-pane > div {
+    min-width: 0;
   }
   @media (max-width: 800px) {
     .split-pane {
