@@ -293,20 +293,21 @@ body {
     <h3>Architecture</h3>
     <pre>
 Corporate ERP          Payment Hub                    Bank Connector           Bridger XG5
-(Backoffice)     (External Screening Module)         (API Connectivity)     (Sanctions Screening)
+(Backoffice)     (External Screening Module)        (API Connectivity)     (Sanctions Screening)
      |                      |                              |                        |
  pain.001.001.03 ─────► Receive payment                    |                        |
-     |                 Stop in External Screening          |                        |
      |                      |                              |                        |
-     |              Extract &amp; transform pay-           |                        |
-     |              ment data from payment into            |                        |
-     |              Bridger API payload (JSON)             |                        |
+     |              Stop in External Screening             |                        |
+     |                      |                              |                        |
+     |              Extract and transform                  |                        |
+     |                payment data into                    |                        |
+     |            Bridger API payload (JSON)               |                        |
      |                      |                              |                        |
      |                  Push payload ───► Internal ─► Receive payload               |
-     |              over internal queue    Queue           |                        |
+     |                      |              Queue           |                        |
      |                      |                              |                        |
      |                      |                       Map to Bridger endpoint         |
-     |                      |                       Handle auth (JWT + X-API-Key)   |
+     |                      |                    Handle auth (JWT + X-API-Key)      |
      |                      |                              |                        |
      |                      |                       POST /api/Token/Issue ─────────►|
      |                      |                              |                        |
@@ -314,23 +315,26 @@ Corporate ERP          Payment Hub                    Bank Connector           B
      |                      |                              |                        |
      |                      |                       POST /api/Lists/Search ────────►|
      |                      |                              |                 Screen entities
-     |                      |                              |                against watchlists
-     |                      |                              |◄──────── SearchResults (sync)
+     |                      |                              |           against (custom) watchlists
+     |                      |                              |◄────────── SearchResults (sync)
      |                      |                              |                        |
      |                      |◄──────── Internal ◄─── Forward response               |
-     |                      |            Queue           payload                    |
+     |                      |            Queue        payload (JSON)                |
      |                      |                              |                        |
      |           Transform Bridger response                |                        |
      |              into pain.002.001.03                   |                        |
      |                      |                              |                        |
      |           Process into External Screening           |                        |
-     |              Map per-payment status:            (optional)                   |
-     |              ACCP → EXTERNAL_ACCEPTED ──► POST /api/Results/SetRecordState ─►|
-     |              RJCT → EXTERNAL_REJECTED ──► POST /api/Results/SetRecordState ─►|
-     |              PDNG → EXTERNAL_SUSPECT                |                        |
-     |                      |                              |                    (optional)
- pain.002.001.03 ◄──── Status Report                       |                  Webhook Events
- (Payment Status)           |                              |                 AlertStateClosed
+     |              Map per-payment status:                |                        |
+     |              ACCP → EXTERNAL_ACCEPTED               |                        |
+     |              RJCT → EXTERNAL_REJECTED               |                        |
+     |                      |                  (optional WriteResultsToDatabase)    |
+     |              PDNG → EXTERNAL_SUSPECT ──► POST /api/Results/SetRecordState ──►|
+     |                      |                              |                        |
+     |                  (optional)                         |                        |
+ pain.002.001.03 ◄──── Status Report                       |                    (optional)
+ (Payment Status)           |                              |                  Webhook Events
+     |                      |                              |                 AlertStateClosed
      |                  (optional)                         |               AlertDecisionApplied
      |◄─────────── Compliance Dashboard ◄────────── Final Decision ─────────────────┘
     </pre>
