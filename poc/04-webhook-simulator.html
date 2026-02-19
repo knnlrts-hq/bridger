@@ -43,41 +43,33 @@
 
   /* --- Nav --- */
   .nav {
-    background: var(--primary-dark);
-    color: #fff;
-    padding: 0 24px;
+    background: #1e293b;
+    padding: 0 2rem;
     display: flex;
     align-items: center;
     height: 56px;
-    gap: 8px;
+    gap: 2rem;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
   .nav-brand {
+    color: #fff;
     font-weight: 700;
-    font-size: 15px;
-    margin-right: 24px;
-    white-space: nowrap;
-    letter-spacing: -0.01em;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .nav-brand svg { flex-shrink: 0; }
-  .nav a {
-    color: rgba(255,255,255,0.75);
+    font-size: 1.1rem;
     text-decoration: none;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 6px;
-    transition: all 0.15s;
+    letter-spacing: -0.02em;
     white-space: nowrap;
   }
-  .nav a:hover { color: #fff; background: rgba(255,255,255,0.1); }
-  .nav a.active { color: #fff; background: rgba(255,255,255,0.18); }
+  .nav-brand span { color: #60a5fa; }
+  .nav a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.15s;
+    white-space: nowrap;
+  }
+  .nav a:hover, .nav a.active { color: #fff; }
 
   /* --- Layout --- */
   .container {
@@ -637,10 +629,7 @@
 
 <!-- Nav -->
 <nav class="nav">
-  <a href="index.html" class="nav-brand" style="color:#fff;text-decoration:none;">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    Bridger XG5 POC
-  </a>
+  <a href="index.html" class="nav-brand"><span>Bridger</span> POC</a>
   <a href="01-pain001-parser.html">01 Parser</a>
   <a href="02-api-explorer.html">02 API Explorer</a>
   <a href="03-screening-flow.html">03 Screening</a>
@@ -928,6 +917,9 @@
 (function() {
   'use strict';
 
+  // ---- Restore mock state from previous screening ----
+  MockBridger.restoreState();
+
   // ---- DOM Refs ----
   const $ = id => document.getElementById(id);
 
@@ -987,7 +979,7 @@
   loadStateBtn.addEventListener('click', () => {
     const state = MockBridger.getState();
     if (state.records.length === 0) {
-      alert('No records in mock state. Use the Screening Workbench (Tool 2) first to create some records.');
+      alert('No records in mock state. Run a screening (Tool 03) or execute a search in the API Explorer (Tool 02) first.');
       return;
     }
     const rec = state.records[state.records.length - 1];
