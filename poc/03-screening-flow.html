@@ -35,42 +35,33 @@
 
   /* --- Nav --- */
   .nav {
-    background: var(--primary);
-    color: #fff;
-    padding: 0 24px;
+    background: #1e293b;
+    padding: 0 2rem;
     display: flex;
     align-items: center;
     height: 56px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    gap: 2rem;
     position: sticky;
     top: 0;
     z-index: 100;
   }
   .nav-brand {
+    color: #fff;
     font-weight: 700;
-    font-size: 18px;
-    margin-right: 32px;
-    white-space: nowrap;
-    letter-spacing: -0.3px;
-  }
-  .nav-links {
-    display: flex;
-    gap: 4px;
-    list-style: none;
-    overflow-x: auto;
-  }
-  .nav-links a {
-    color: rgba(255,255,255,.75);
+    font-size: 1.1rem;
     text-decoration: none;
-    padding: 8px 14px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
+    letter-spacing: -0.02em;
     white-space: nowrap;
-    transition: background .15s, color .15s;
   }
-  .nav-links a:hover { background: rgba(255,255,255,.12); color: #fff; }
-  .nav-links a.active { background: rgba(255,255,255,.2); color: #fff; }
+  .nav-brand span { color: #60a5fa; }
+  .nav a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.15s;
+    white-space: nowrap;
+  }
+  .nav a:hover, .nav a.active { color: #fff; }
 
   /* --- Layout --- */
   .container {
@@ -336,6 +327,14 @@
   .pipeline-step.active .pipeline-label { color: var(--primary); }
   .pipeline-step.done .pipeline-label { color: var(--success); }
 
+  .pipeline-desc {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+    font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+    margin-top: 2px;
+  }
+
   .pipeline-status {
     margin-top: 4px;
     font-size: 11px;
@@ -572,14 +571,12 @@
 
 <!-- Navigation -->
 <nav class="nav">
-  <a href="index.html" class="nav-brand" style="color:#fff;text-decoration:none;">Bridger XG5 POC</a>
-  <ul class="nav-links">
-    <li><a href="01-pain001-parser.html">01 Parser</a></li>
-    <li><a href="02-api-explorer.html">02 API Explorer</a></li>
-    <li><a href="03-screening-flow.html" class="active">03 Screening</a></li>
-    <li><a href="04-webhook-simulator.html">04 Webhooks</a></li>
-    <li><a href="05-compliance-dashboard.html">05 Compliance</a></li>
-  </ul>
+  <a href="index.html" class="nav-brand"><span>Bridger</span> POC</a>
+  <a href="01-pain001-parser.html">01 Parser</a>
+  <a href="02-api-explorer.html">02 API Explorer</a>
+  <a href="03-screening-flow.html" class="active">03 Screening</a>
+  <a href="04-webhook-simulator.html">04 Webhooks</a>
+  <a href="05-compliance-dashboard.html">05 Compliance</a>
 </nav>
 
 <div class="container">
@@ -608,6 +605,9 @@
             <option value="simple">Simple (3 clean payments)</option>
             <option value="mixed">Mixed (2 clean + 3 suspicious)</option>
             <option value="batch">Batch (8 payments, multi-block)</option>
+            <option value="singleClean">Single Payment (Clean)</option>
+            <option value="singleSuspectLow">Single Payment (Suspect - Low)</option>
+            <option value="singleSuspectHigh">Single Payment (Suspect - High)</option>
           </select>
         </div>
       </div>
@@ -639,55 +639,55 @@
 
   <!-- ===== PIPELINE VISUALIZATION ===== -->
   <div class="card">
-    <div class="card-title"><span class="icon">&#9881;</span> Screening Pipeline</div>
+    <div class="card-title"><span class="icon">&#9881;</span> End-to-End Screening Flow</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Follows the 6-step E2E flow from the Bridger API guide: Authenticate &rarr; Discover Lists &rarr; Screen Payment &rarr; Apply Thresholds &amp; Build pain.002 &rarr; Update Alert State &rarr; Webhook Notification.</p>
     <div class="pipeline" id="pipeline">
-      <!-- Step 1: Payment Hub - Parse & Extract -->
-      <div class="pipeline-step" id="step-parse">
-        <div class="pipeline-node" id="node-parse">&#128196;</div>
-        <div class="pipeline-label">Payment Hub</div>
-        <div class="pipeline-status" id="status-parse">Parse &amp; extract</div>
-      </div>
-      <div class="pipeline-connector" id="conn-1"></div>
-      <!-- Step 2: Queue Out -->
-      <div class="pipeline-step" id="step-queue">
-        <div class="pipeline-node" id="node-queue">&#128233;</div>
-        <div class="pipeline-label">Queue</div>
-        <div class="pipeline-status" id="status-queue">To Bank Connector</div>
-      </div>
-      <div class="pipeline-connector" id="conn-2"></div>
-      <!-- Step 3: Bank Connector - Auth + Call -->
+      <!-- Step 1: Authenticate -->
       <div class="pipeline-step" id="step-auth">
         <div class="pipeline-node" id="node-auth">&#128274;</div>
-        <div class="pipeline-label">Bank Connector</div>
-        <div class="pipeline-status" id="status-auth">Auth &amp; API call</div>
+        <div class="pipeline-label">1. Authenticate</div>
+        <div class="pipeline-desc">POST /api/Token/Issue</div>
+        <div class="pipeline-status" id="status-auth"></div>
       </div>
-      <div class="pipeline-connector" id="conn-3"></div>
-      <!-- Step 4: Bridger API Screen -->
+      <div class="pipeline-connector" id="conn-1"></div>
+      <!-- Step 2: Discover Lists -->
+      <div class="pipeline-step" id="step-lists">
+        <div class="pipeline-node" id="node-lists">&#128218;</div>
+        <div class="pipeline-label">2. Discover Lists</div>
+        <div class="pipeline-desc">POST /api/Lists/DataFiles</div>
+        <div class="pipeline-status" id="status-lists"></div>
+      </div>
+      <div class="pipeline-connector" id="conn-2"></div>
+      <!-- Step 3: Screen Payment -->
       <div class="pipeline-step" id="step-screen">
         <div class="pipeline-node" id="node-screen">&#128269;</div>
-        <div class="pipeline-label">Bridger API</div>
-        <div class="pipeline-status" id="status-screen">Lists/Search</div>
+        <div class="pipeline-label">3. Screen Payment</div>
+        <div class="pipeline-desc">POST /api/Lists/Search</div>
+        <div class="pipeline-status" id="status-screen"></div>
       </div>
-      <div class="pipeline-connector" id="conn-4"></div>
-      <!-- Step 5: Response back via queue -->
-      <div class="pipeline-step" id="step-response">
-        <div class="pipeline-node" id="node-response">&#128229;</div>
-        <div class="pipeline-label">Response Queue</div>
-        <div class="pipeline-status" id="status-response">Back to Hub</div>
-      </div>
-      <div class="pipeline-connector" id="conn-5"></div>
-      <!-- Step 6: Apply Thresholds -->
+      <div class="pipeline-connector" id="conn-3"></div>
+      <!-- Step 4: Apply Thresholds & Build pain.002 -->
       <div class="pipeline-step" id="step-rules">
         <div class="pipeline-node" id="node-rules">&#9878;</div>
-        <div class="pipeline-label">Apply Rules</div>
-        <div class="pipeline-status" id="status-rules">Thresholds</div>
+        <div class="pipeline-label">4. Thresholds + pain.002</div>
+        <div class="pipeline-desc">ACCP / RJCT / PDNG</div>
+        <div class="pipeline-status" id="status-rules"></div>
       </div>
-      <div class="pipeline-connector" id="conn-6"></div>
-      <!-- Step 7: Payment Hub - Build pain.002 & Map to Ext Screening -->
-      <div class="pipeline-step" id="step-status">
-        <div class="pipeline-node" id="node-status">&#9989;</div>
-        <div class="pipeline-label">pain.002</div>
-        <div class="pipeline-status" id="status-status">Ext Screening map</div>
+      <div class="pipeline-connector" id="conn-4"></div>
+      <!-- Step 5: Update Alert State -->
+      <div class="pipeline-step" id="step-state">
+        <div class="pipeline-node" id="node-state">&#128221;</div>
+        <div class="pipeline-label">5. Update State</div>
+        <div class="pipeline-desc">POST SetRecordState</div>
+        <div class="pipeline-status" id="status-state"></div>
+      </div>
+      <div class="pipeline-connector" id="conn-5"></div>
+      <!-- Step 6: Webhook Notification -->
+      <div class="pipeline-step" id="step-webhook">
+        <div class="pipeline-node" id="node-webhook">&#128232;</div>
+        <div class="pipeline-label">6. Webhook</div>
+        <div class="pipeline-desc">HMAC-SHA256 signed</div>
+        <div class="pipeline-status" id="status-webhook"></div>
       </div>
     </div>
     <div class="run-btn-row">
@@ -768,8 +768,8 @@
   const sessionNotice = document.getElementById('sessionNotice');
   const sessionNoticeText = document.getElementById('sessionNoticeText');
 
-  const stepIds = ['parse', 'queue', 'auth', 'screen', 'response', 'rules', 'status'];
-  const connIds = ['1', '2', '3', '4', '5', '6'];
+  const stepIds = ['auth', 'lists', 'screen', 'rules', 'state', 'webhook'];
+  const connIds = ['1', '2', '3', '4', '5'];
 
   // --- Threshold bar sync ---
   function updateThresholdVisual() {
@@ -902,37 +902,19 @@
     resetPipeline();
 
     try {
-      // === Step 1: Payment Hub — External Screening: Parse pain.001 & Extract parties ===
-      activateStep('parse');
-      await delay(500);
+      // Pre-parse to extract entities (needed for later steps)
       var parsed;
       try {
         parsed = SampleData.parsePain001(xml);
       } catch (e) {
-        errorStep('parse', 'Parse error: ' + e.message);
+        errorStep('auth', 'XML parse error: ' + e.message);
         throw e;
       }
       var txnCount = 0;
       parsed.batches.forEach(function (b) { txnCount += b.transactions.length; });
       var entities = SampleData.paymentToEntities(parsed);
-      completeStep('parse', txnCount + ' txn' + (txnCount !== 1 ? 's' : '') + ', ' + entities.length + ' entities extracted');
 
-      // Connector 1
-      activateConnector('1');
-      await delay(350);
-      completeConnector('1');
-
-      // === Step 2: Internal Queue — Push payload to Bank Connector ===
-      activateStep('queue');
-      await delay(400);
-      completeStep('queue', 'JSON payload queued');
-
-      // Connector 2
-      activateConnector('2');
-      await delay(350);
-      completeConnector('2');
-
-      // === Step 3: Bank Connector — Authenticate & call Bridger API ===
+      // === Step 1: Authenticate — POST /api/Token/Issue ===
       activateStep('auth');
       await delay(500);
       var authResult = MockBridger.tokenIssue('poc-client', 'screening-user', 'demo-pass-2026');
@@ -940,15 +922,23 @@
         errorStep('auth', 'Auth failed');
         throw new Error(authResult.error.Message);
       }
-      var tokenPreview = authResult.access_token.substring(0, 20) + '...';
-      completeStep('auth', 'JWT + X-API-Key ready');
+      completeStep('auth', 'JWT issued (expires in 3600s)');
 
-      // Connector 3
-      activateConnector('3');
-      await delay(350);
-      completeConnector('3');
+      activateConnector('1');
+      await delay(300);
+      completeConnector('1');
 
-      // === Step 4: Bridger API — Lists/Search (synchronous) ===
+      // === Step 2: Discover Lists — POST /api/Lists/DataFiles ===
+      activateStep('lists');
+      await delay(400);
+      var dataFiles = MockBridger.listsDataFiles();
+      completeStep('lists', dataFiles.DataFiles.length + ' lists available');
+
+      activateConnector('2');
+      await delay(300);
+      completeConnector('2');
+
+      // === Step 3: Screen Payment — POST /api/Lists/Search (sync) ===
       activateStep('screen');
       await delay(600);
       var searchRequest = {
@@ -967,24 +957,13 @@
       };
       var searchResults = MockBridger.listsSearch(searchRequest);
       var matchCount = searchResults.SearchResults.Records.filter(function (r) { return r.HasScreeningListMatches; }).length;
-      completeStep('screen', matchCount + ' match' + (matchCount !== 1 ? 'es' : '') + ' (sync)');
+      completeStep('screen', entities.length + ' entities screened, ' + matchCount + ' match' + (matchCount !== 1 ? 'es' : ''));
 
-      // Connector 4
-      activateConnector('4');
-      await delay(350);
-      completeConnector('4');
+      activateConnector('3');
+      await delay(300);
+      completeConnector('3');
 
-      // === Step 5: Response Queue — Bank Connector passes response back to Payment Hub ===
-      activateStep('response');
-      await delay(400);
-      completeStep('response', 'SearchResults returned');
-
-      // Connector 5
-      activateConnector('5');
-      await delay(350);
-      completeConnector('5');
-
-      // === Step 6: Payment Hub — Apply Thresholds ===
+      // === Step 4: Apply Thresholds & Build pain.002 ===
       activateStep('rules');
       await delay(500);
       var thresholds = {
@@ -993,31 +972,11 @@
       };
       var thresholdResults = MockBridger.applyThresholds(searchResults, thresholds);
 
-      var acceptCount = 0, rejectCount = 0, suspectCount = 0;
-      thresholdResults.forEach(function (r) {
-        if (r.screening.traxStatus === 'EXTERNAL_ACCEPTED') acceptCount++;
-        else if (r.screening.traxStatus === 'EXTERNAL_REJECTED') rejectCount++;
-        else suspectCount++;
-      });
-      completeStep('rules', acceptCount + 'A / ' + suspectCount + 'S / ' + rejectCount + 'R');
-
-      // Connector 6
-      activateConnector('6');
-      await delay(350);
-      completeConnector('6');
-
-      // === Step 7: Payment Hub — Build pain.002 & Map to External Screening status ===
-      activateStep('status');
-      await delay(500);
-
       // Build enriched results keyed by payment ref
-      // We need to group entity-level results back to payment level.
-      // Multiple entities may belong to the same payment (creditor + ultimate creditor).
       var paymentMap = {};
       thresholdResults.forEach(function (rec) {
         var ref = rec._paymentRef || rec.Record;
         if (!paymentMap[ref]) {
-          // find original entity info
           var ent = entities.find(function (e) { return e.RecordID === rec.Record; });
           paymentMap[ref] = {
             ref: ref,
@@ -1036,11 +995,9 @@
         var pm = paymentMap[ref];
         pm.records.push(rec);
 
-        // Aggregate: worst status wins
         var score = rec.screening.topScore;
         if (score > pm.topScore) pm.topScore = score;
 
-        // Status escalation: accepted < suspect < rejected
         var statusRank = { 'EXTERNAL_ACCEPTED': 0, 'EXTERNAL_SUSPECT': 1, 'EXTERNAL_REJECTED': 2 };
         if ((statusRank[rec.screening.traxStatus] || 0) > (statusRank[pm.traxStatus] || 0)) {
           pm.traxStatus = rec.screening.traxStatus;
@@ -1048,7 +1005,6 @@
           pm.decision = rec.screening.decision;
         }
 
-        // Collect matches
         if (rec.WatchlistResults && rec.WatchlistResults.length > 0) {
           var entName = rec._meta ? rec._meta.inputName : '';
           rec.WatchlistResults.forEach(function (m) {
@@ -1066,8 +1022,6 @@
       });
 
       var payments = Object.values(paymentMap);
-
-      // Recount at payment level
       var pAccepted = 0, pRejected = 0, pSuspect = 0;
       payments.forEach(function (p) {
         if (p.traxStatus === 'EXTERNAL_ACCEPTED') pAccepted++;
@@ -1075,9 +1029,7 @@
         else pSuspect++;
       });
 
-      completeStep('status', pAccepted + ' ACCP / ' + pSuspect + ' PDNG / ' + pRejected + ' RJCT \u2192 Ext Screening mapped');
-
-      // Store results
+      // Generate pain.002.001.03 status report
       screeningResults = {
         timestamp: new Date().toISOString(),
         msgId: parsed.header.msgId,
@@ -1085,14 +1037,53 @@
         summary: { accepted: pAccepted, rejected: pRejected, suspect: pSuspect, total: payments.length },
         thresholds: thresholds
       };
-
-      // Generate pain.002.001.03 status report (Payment Hub External Screening output)
       var pain002Xml = SampleData.generatePain002(screeningResults, parsed);
       screeningResults.pain002Xml = pain002Xml;
+
+      completeStep('rules', pAccepted + ' ACCP / ' + pSuspect + ' PDNG / ' + pRejected + ' RJCT');
+
+      activateConnector('4');
+      await delay(300);
+      completeConnector('4');
+
+      // === Step 5: Update Alert State — POST /api/Results/SetRecordState ===
+      activateStep('state');
+      await delay(400);
+      var autoUpdated = 0;
+      payments.forEach(function (p) {
+        if (p.traxStatus !== 'EXTERNAL_SUSPECT') {
+          p.records.forEach(function (rec) {
+            if (rec.ResultID) {
+              var newState = {
+                AlertState: 'Closed',
+                Status: p.traxStatus === 'EXTERNAL_ACCEPTED' ? 'Transaction Approved' : 'Blocked Account',
+                Note: 'Auto-decision: score ' + p.topScore + ' (' + p.decision + ')'
+              };
+              MockBridger.resultsSetRecordState(rec.ResultID, newState);
+              autoUpdated++;
+            }
+          });
+        }
+      });
+      completeStep('state', autoUpdated + ' auto-decided, ' + pSuspect + ' held for review');
+
+      activateConnector('5');
+      await delay(300);
+      completeConnector('5');
+
+      // === Step 6: Webhook Notification ===
+      activateStep('webhook');
+      await delay(400);
+      if (autoUpdated > 0) {
+        completeStep('webhook', autoUpdated + ' webhook(s) would fire');
+      } else {
+        completeStep('webhook', 'No auto-decisions — no webhooks');
+      }
 
       // Save to sessionStorage
       try {
         sessionStorage.setItem('bridger-poc-results', JSON.stringify(screeningResults));
+        MockBridger.saveState();
       } catch (e) { /* ignore */ }
 
       // Render results

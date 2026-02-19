@@ -34,49 +34,34 @@
   }
 
   /* --- Nav Bar --- */
-  .navbar {
-    background: var(--primary);
-    color: #fff;
-    padding: 0 24px;
+  .nav {
+    background: #1e293b;
+    padding: 0 2rem;
     display: flex;
     align-items: center;
     height: 56px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    gap: 2rem;
     position: sticky;
     top: 0;
     z-index: 100;
   }
-  .navbar-brand {
-    font-size: 18px;
+  .nav-brand {
+    color: #fff;
     font-weight: 700;
-    letter-spacing: -0.3px;
-    margin-right: 32px;
-    white-space: nowrap;
-  }
-  .navbar-links {
-    display: flex;
-    gap: 4px;
-    list-style: none;
-    overflow-x: auto;
-  }
-  .navbar-links a {
-    color: rgba(255,255,255,0.75);
+    font-size: 1.1rem;
     text-decoration: none;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 6px;
-    transition: background 0.15s, color 0.15s;
+    letter-spacing: -0.02em;
     white-space: nowrap;
   }
-  .navbar-links a:hover {
-    background: rgba(255,255,255,0.12);
-    color: #fff;
+  .nav-brand span { color: #60a5fa; }
+  .nav a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.15s;
+    white-space: nowrap;
   }
-  .navbar-links a.active {
-    background: rgba(255,255,255,0.2);
-    color: #fff;
-  }
+  .nav a:hover, .nav a.active { color: #fff; }
 
   /* --- Layout --- */
   .container {
@@ -497,15 +482,13 @@
 <body>
 
 <!-- Nav Bar -->
-<nav class="navbar">
-  <a href="index.html" class="navbar-brand" style="color:#fff;text-decoration:none;">Bridger POC</a>
-  <ul class="navbar-links">
-    <li><a href="01-pain001-parser.html">01 Parser</a></li>
-    <li><a href="02-api-explorer.html" class="active">02 API Explorer</a></li>
-    <li><a href="03-screening-flow.html">03 Screening</a></li>
-    <li><a href="04-webhook-simulator.html">04 Webhooks</a></li>
-    <li><a href="05-compliance-dashboard.html">05 Compliance</a></li>
-  </ul>
+<nav class="nav">
+  <a href="index.html" class="nav-brand"><span>Bridger</span> POC</a>
+  <a href="01-pain001-parser.html">01 Parser</a>
+  <a href="02-api-explorer.html" class="active">02 API Explorer</a>
+  <a href="03-screening-flow.html">03 Screening</a>
+  <a href="04-webhook-simulator.html">04 Webhooks</a>
+  <a href="05-compliance-dashboard.html">05 Compliance</a>
 </nav>
 
 <div class="container">
@@ -608,15 +591,29 @@
 
     <!-- Input Records -->
     <div class="card">
-      <div class="card-title">Input Records</div>
+      <div class="card-title">Input Records — InputEntity</div>
       <div class="btn-row mb-16">
         <button class="btn btn-primary btn-sm" id="btnAddEntity">+ Add Entity</button>
-        <span style="color:var(--text-secondary);font-size:12px;margin:0 8px;">Pre-fill samples:</span>
+        <span style="color:var(--text-secondary);font-size:12px;margin:0 8px;">Pre-fill:</span>
         <button class="btn btn-outline btn-sm" data-prefill="clean">John Smith (Clean)</button>
         <button class="btn btn-outline btn-sm" data-prefill="suspicious">Ahmad Trading (Suspicious)</button>
         <button class="btn btn-outline btn-sm" data-prefill="match">Petromax Energy (Match)</button>
       </div>
       <div id="entityContainer"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input Records — InputEFT (ISO 20022 Payment) <span class="badge" style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">Payment Screening</span></div>
+      <p class="text-muted mb-8">Screen a raw ISO 20022 pain.001 payment message. XG parses all parties (debtor, creditor, ultimate creditor) from the XML automatically. The XML is base64-encoded in the <code>EFT.Value</code> field.</p>
+      <div class="btn-row mb-16">
+        <span style="color:var(--text-secondary);font-size:12px;margin-right:8px;">Load payment sample:</span>
+        <button class="btn btn-outline btn-sm" data-eft-prefill="singleClean">Single Clean</button>
+        <button class="btn btn-outline btn-sm" data-eft-prefill="singleSuspectLow">Single Suspect (Low)</button>
+        <button class="btn btn-outline btn-sm" data-eft-prefill="singleSuspectHigh">Single Suspect (High)</button>
+      </div>
+      <div id="eftContainer">
+        <div id="eftEmptyState" class="text-muted" style="padding:16px;text-align:center;border:1px dashed var(--border);border-radius:8px;">No EFT record loaded. Click a payment sample above to populate.</div>
+      </div>
     </div>
 
     <!-- Execute -->
@@ -652,12 +649,17 @@
   <!-- =============================== RESULTS TAB =============================== -->
   <div id="tab-results" class="tab-panel">
 
+    <!-- State notice -->
+    <div id="resultsStateNotice" class="hidden" style="padding:12px 16px;background:#e1effe;border:1px solid #bfdbfe;border-radius:8px;margin-bottom:16px;font-size:13px;color:#1e40af;display:flex;align-items:center;gap:8px;">
+      <span>&#9432;</span> <span id="resultsStateText"></span>
+    </div>
+
     <!-- Search Records -->
     <div class="card">
       <div class="card-title">POST /api/Results/SearchRecords <span class="badge">Query alerts by criteria</span></div>
       <div class="form-grid">
         <div class="form-group">
-          <label>Run ID</label>
+          <label>Run ID <button class="btn btn-outline btn-sm" id="btnAutofillRunId" style="font-size:10px;padding:2px 8px;margin-left:8px;">Autofill</button></label>
           <input type="number" id="resRunId" placeholder="e.g. 100001">
         </div>
         <div class="form-group">
@@ -687,7 +689,7 @@
       <div class="card-title">POST /api/Results/Records <span class="badge">Fetch alerts by ID</span></div>
       <div class="form-grid">
         <div class="form-group">
-          <label>Result ID</label>
+          <label>Result ID <button class="btn btn-outline btn-sm" id="btnAutofillResultId" style="font-size:10px;padding:2px 8px;margin-left:8px;">Autofill</button></label>
           <input type="number" id="resResultId" placeholder="e.g. 200001">
         </div>
       </div>
@@ -705,7 +707,7 @@
       <div class="card-title">POST /api/Results/SetRecordState <span class="badge">Update alert state &mdash; triggers webhooks</span></div>
       <div class="form-grid">
         <div class="form-group">
-          <label>Result ID</label>
+          <label>Result ID <button class="btn btn-outline btn-sm" id="btnAutofillStateId" style="font-size:10px;padding:2px 8px;margin-left:8px;">Autofill</button></label>
           <input type="number" id="stateResultId" placeholder="e.g. 200001">
         </div>
         <div class="form-group">
@@ -773,6 +775,9 @@
   // --- State ---
   let currentToken = null;
   let entityCounter = 0;
+
+  // --- Restore mock state from previous screening ---
+  var stateRestored = MockBridger.restoreState();
 
   // --- JSON Syntax Highlighter ---
   function syntaxHighlight(json) {
@@ -976,6 +981,54 @@
     });
   });
 
+  // --- EFT Prefill ---
+  var currentEft = null;
+  var eftContainer = document.getElementById('eftContainer');
+  var eftEmptyState = document.getElementById('eftEmptyState');
+
+  function renderEftRecord(sampleKey, xml) {
+    var b64 = btoa(unescape(encodeURIComponent(xml)));
+    var parsed = SampleData.parsePain001(xml);
+    var msgId = parsed.header.msgId;
+    var parties = parsed.allParties.filter(function(p) { return p.type !== 'Debtor'; }).map(function(p) { return p.name; }).join(', ');
+    currentEft = { EFTID: msgId, Type: 'ISO20022', Value: b64 };
+    eftEmptyState.style.display = 'none';
+
+    var existing = eftContainer.querySelector('.eft-record');
+    if (existing) existing.remove();
+
+    var div = document.createElement('div');
+    div.className = 'eft-record';
+    div.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:16px;background:#f8fafc;';
+    div.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+        '<div style="font-weight:700;font-size:14px;">InputEFT — ISO 20022 Payment</div>' +
+        '<button class="btn btn-outline btn-sm" id="btnRemoveEft" style="font-size:11px;">Remove</button>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">' +
+        '<div><span style="color:var(--text-secondary);">EFTID:</span> <code>' + escapeHtml(msgId) + '</code></div>' +
+        '<div><span style="color:var(--text-secondary);">Type:</span> <code>ISO20022</code></div>' +
+        '<div style="grid-column:1/-1;"><span style="color:var(--text-secondary);">Parties to screen:</span> ' + escapeHtml(parties) + '</div>' +
+        '<div style="grid-column:1/-1;"><span style="color:var(--text-secondary);">Base64 Value:</span> <code style="font-size:11px;word-break:break-all;">' + escapeHtml(b64.substring(0, 80)) + '...</code></div>' +
+      '</div>';
+    eftContainer.appendChild(div);
+
+    div.querySelector('#btnRemoveEft').addEventListener('click', function() {
+      currentEft = null;
+      div.remove();
+      eftEmptyState.style.display = '';
+    });
+  }
+
+  document.querySelectorAll('[data-eft-prefill]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var key = btn.dataset.eftPrefill;
+      if (SampleData.SAMPLES[key]) {
+        renderEftRecord(key, SampleData.SAMPLES[key].xml);
+      }
+    });
+  });
+
   // Build search request from form
   function buildSearchRequest() {
     var rows = entityContainer.querySelectorAll('.entity-row');
@@ -1018,6 +1071,11 @@
       records.push({ RecordID: recordId++, Entity: entity });
     });
 
+    // Include EFT record if loaded
+    if (currentEft) {
+      records.push({ RecordID: recordId++, EFT: currentEft });
+    }
+
     return {
       EntitySearchRequest: {
         ClientContext: {
@@ -1044,13 +1102,14 @@
   document.getElementById('btnExecuteSearch').addEventListener('click', function() {
     var request = buildSearchRequest();
     if (request.EntitySearchRequest.Input.Records.length === 0) {
-      alert('Add at least one entity before searching.');
+      alert('Add at least one entity or load an EFT payment before searching.');
       return;
     }
 
     showJson('searchRequest', request);
     var response = MockBridger.listsSearch(request);
     showJson('searchResponse', response);
+    MockBridger.saveState();
 
     // Summary
     var recs = response.SearchResults.Records;
@@ -1112,6 +1171,10 @@
   document.getElementById('btnClearSearch').addEventListener('click', function() {
     entityContainer.innerHTML = '';
     entityCounter = 0;
+    currentEft = null;
+    var eftRec = eftContainer.querySelector('.eft-record');
+    if (eftRec) eftRec.remove();
+    eftEmptyState.style.display = '';
     document.getElementById('searchRequest').innerHTML = '';
     document.getElementById('searchResponse').innerHTML = '';
     document.getElementById('searchSummary').classList.add('hidden');
@@ -1121,6 +1184,47 @@
   });
 
   // --- RESULTS TAB ---
+
+  // Show state notice if records exist from screening
+  (function() {
+    var recordIds = MockBridger.getRecordIds();
+    if (stateRestored && recordIds.length > 0) {
+      var notice = document.getElementById('resultsStateNotice');
+      notice.classList.remove('hidden');
+      notice.style.display = '';
+      document.getElementById('resultsStateText').textContent =
+        'Mock state restored from previous screening (' + recordIds.length + ' records, Run IDs: ' + MockBridger.getRunIds().join(', ') + '). Use Autofill buttons to populate IDs.';
+    }
+  })();
+
+  // Autofill buttons
+  document.getElementById('btnAutofillRunId').addEventListener('click', function() {
+    var ids = MockBridger.getRunIds();
+    if (ids.length > 0) {
+      document.getElementById('resRunId').value = ids[ids.length - 1];
+    } else { alert('No runs in mock state. Run a screening first (Tool 03) or execute a search in the Search tab.'); }
+  });
+
+  document.getElementById('btnAutofillResultId').addEventListener('click', function() {
+    var ids = MockBridger.getRecordIds();
+    if (ids.length > 0) {
+      document.getElementById('resResultId').value = ids[0];
+    } else { alert('No records in mock state. Run a screening first (Tool 03) or execute a search in the Search tab.'); }
+  });
+
+  document.getElementById('btnAutofillStateId').addEventListener('click', function() {
+    var ids = MockBridger.getRecordIds();
+    if (ids.length > 0) {
+      // Prefer an Open record if available
+      var openId = null;
+      for (var i = 0; i < ids.length; i++) {
+        var rec = MockBridger.resultsRecord(ids[i]);
+        if (rec && rec.RecordState && rec.RecordState.AlertState === 'Open') { openId = ids[i]; break; }
+      }
+      document.getElementById('stateResultId').value = openId || ids[0];
+    } else { alert('No records in mock state. Run a screening first (Tool 03) or execute a search in the Search tab.'); }
+  });
+
   document.getElementById('btnSearchRecords').addEventListener('click', function() {
     var criteria = {};
     var runId = document.getElementById('resRunId').value.trim();
@@ -1151,6 +1255,7 @@
     };
     var result = MockBridger.resultsSetRecordState(parseInt(id, 10), newState);
     showJson('setStateResponse', result);
+    MockBridger.saveState();
   });
 
   // --- LISTS TAB ---

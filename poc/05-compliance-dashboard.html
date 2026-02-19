@@ -33,57 +33,34 @@
   }
 
   /* --- Top Nav --- */
-  .top-nav {
-    background: var(--text);
-    color: #fff;
-    padding: 0 24px;
+  .nav {
+    background: #1e293b;
+    padding: 0 2rem;
     display: flex;
     align-items: center;
     height: 56px;
+    gap: 2rem;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
-
-  .top-nav .brand {
-    font-size: 18px;
+  .nav-brand {
+    color: #fff;
     font-weight: 700;
-    margin-right: 40px;
-    letter-spacing: -0.3px;
-    white-space: nowrap;
-  }
-
-  .top-nav .brand span {
-    color: #93c5fd;
-  }
-
-  .top-nav nav {
-    display: flex;
-    gap: 4px;
-    overflow-x: auto;
-  }
-
-  .top-nav nav a {
-    color: #cbd5e1;
+    font-size: 1.1rem;
     text-decoration: none;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 6px;
+    letter-spacing: -0.02em;
     white-space: nowrap;
-    transition: background 0.15s, color 0.15s;
   }
-
-  .top-nav nav a:hover {
-    background: rgba(255,255,255,0.1);
-    color: #fff;
+  .nav-brand span { color: #60a5fa; }
+  .nav a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.15s;
+    white-space: nowrap;
   }
-
-  .top-nav nav a.active {
-    background: var(--primary);
-    color: #fff;
-  }
+  .nav a:hover, .nav a.active { color: #fff; }
 
   /* --- Layout --- */
   .container {
@@ -760,9 +737,9 @@
 
   /* --- Responsive --- */
   @media (max-width: 768px) {
-    .top-nav { padding: 0 12px; }
-    .top-nav .brand { margin-right: 16px; font-size: 16px; }
-    .top-nav nav a { font-size: 12px; padding: 4px 8px; }
+    .nav { padding: 0 1rem; gap: 1rem; }
+    .nav-brand { font-size: 1rem; }
+    .nav a { font-size: 0.75rem; }
     .container { padding: 20px 12px 48px; }
     .detail-grid { grid-template-columns: 1fr; }
     .stats-bar { gap: 12px; }
@@ -773,16 +750,14 @@
 <body>
 
 <!-- Top Navigation -->
-<div class="top-nav">
-  <a href="index.html" class="brand" style="text-decoration:none;">Bridger <span>POC</span></a>
-  <nav>
-    <a href="01-pain001-parser.html">01 Parser</a>
-    <a href="02-api-explorer.html">02 API Explorer</a>
-    <a href="03-screening-flow.html">03 Screening</a>
-    <a href="04-webhook-simulator.html">04 Webhooks</a>
-    <a href="05-compliance-dashboard.html" class="active">05 Compliance</a>
-  </nav>
-</div>
+<nav class="nav">
+  <a href="index.html" class="nav-brand"><span>Bridger</span> POC</a>
+  <a href="01-pain001-parser.html">01 Parser</a>
+  <a href="02-api-explorer.html">02 API Explorer</a>
+  <a href="03-screening-flow.html">03 Screening</a>
+  <a href="04-webhook-simulator.html">04 Webhooks</a>
+  <a href="05-compliance-dashboard.html" class="active">05 Compliance</a>
+</nav>
 
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
@@ -883,6 +858,9 @@
 <script>
 (function() {
   'use strict';
+
+  // --- Restore mock state from previous screening ---
+  MockBridger.restoreState();
 
   // --- State ---
   var alerts = [];
@@ -1370,6 +1348,7 @@
       stateUpdate.AssignmentType = 'User';
     }
     MockBridger.resultsSetRecordState(a.resultId, stateUpdate);
+    MockBridger.saveState();
 
     // 2. Generate webhook payload
     var eventType = alertState === 'Closed' ? 'AlertStateClosed' : 'AlertDecisionApplied';

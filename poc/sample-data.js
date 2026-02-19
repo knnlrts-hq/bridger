@@ -368,10 +368,174 @@ const SampleData = (() => {
   </CstmrCdtTrfInitn>
 </Document>`;
 
+  // --- Singular Payment Samples ---
+
+  const SINGLE_CLEAN = `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.03" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>MSG-2026-0219-SC01</MsgId>
+      <CreDtTm>2026-02-19T08:30:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>45000.00</CtrlSum>
+      <InitgPty>
+        <Nm>Nordic Trade Solutions AB</Nm>
+        <Id><OrgId><BICOrBEI>NORDSE22XXX</BICOrBEI></OrgId></Id>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>PMT-SINGLE-CLEAN</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>45000.00</CtrlSum>
+      <ReqdExctnDt>2026-02-20</ReqdExctnDt>
+      <Dbtr>
+        <Nm>Nordic Trade Solutions AB</Nm>
+        <PstlAdr>
+          <StrtNm>Storgatan 15</StrtNm>
+          <PstCd>111 23</PstCd>
+          <TwnNm>Stockholm</TwnNm>
+          <Ctry>SE</Ctry>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAcct><Id><IBAN>SE4550000000058398257466</IBAN></Id></DbtrAcct>
+      <DbtrAgt><FinInstnId><BIC>ESSESESSXXX</BIC></FinInstnId></DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <InstrId>INSTR-SC01</InstrId>
+          <EndToEndId>E2E-2026-SC01</EndToEndId>
+        </PmtId>
+        <Amt><InstdAmt Ccy="EUR">45000.00</InstdAmt></Amt>
+        <CdtrAgt><FinInstnId><BIC>DEUTDEFFXXX</BIC></FinInstnId></CdtrAgt>
+        <Cdtr>
+          <Nm>Mueller Engineering GmbH</Nm>
+          <PstlAdr>
+            <StrtNm>Friedrichstrasse 100</StrtNm>
+            <PstCd>10117</PstCd>
+            <TwnNm>Berlin</TwnNm>
+            <Ctry>DE</Ctry>
+          </PstlAdr>
+        </Cdtr>
+        <CdtrAcct><Id><IBAN>DE89370400440532013000</IBAN></Id></CdtrAcct>
+        <RmtInf><Ustrd>Invoice INV-2026-0088 - Precision tooling components</Ustrd></RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>`;
+
+  const SINGLE_SUSPECT_LOW = `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.03" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>MSG-2026-0219-SL01</MsgId>
+      <CreDtTm>2026-02-19T09:15:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>67500.00</CtrlSum>
+      <InitgPty>
+        <Nm>Atlantic Importers Ltd</Nm>
+        <Id><OrgId><BICOrBEI>ATLNCA22XXX</BICOrBEI></OrgId></Id>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>PMT-SINGLE-SUSPECT-LOW</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>67500.00</CtrlSum>
+      <ReqdExctnDt>2026-02-20</ReqdExctnDt>
+      <Dbtr>
+        <Nm>Atlantic Importers Ltd</Nm>
+        <PstlAdr>
+          <StrtNm>200 Bay Street</StrtNm>
+          <PstCd>M5J 2J5</PstCd>
+          <TwnNm>Toronto</TwnNm>
+          <Ctry>CA</Ctry>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAcct><Id><IBAN>CA2300012345678901234</IBAN></Id></DbtrAcct>
+      <DbtrAgt><FinInstnId><BIC>ROYCCAT2XXX</BIC></FinInstnId></DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <InstrId>INSTR-SL01</InstrId>
+          <EndToEndId>E2E-2026-SL01</EndToEndId>
+        </PmtId>
+        <Amt><InstdAmt Ccy="USD">67500.00</InstdAmt></Amt>
+        <CdtrAgt><FinInstnId><BIC>BKCHCNBJXXX</BIC></FinInstnId></CdtrAgt>
+        <Cdtr>
+          <Nm>Al Noor Trading LLC</Nm>
+          <PstlAdr>
+            <StrtNm>12 Khalifa Street</StrtNm>
+            <PstCd>00971</PstCd>
+            <TwnNm>Abu Dhabi</TwnNm>
+            <Ctry>AE</Ctry>
+          </PstlAdr>
+        </Cdtr>
+        <CdtrAcct><Id><IBAN>AE070331234567890123456</IBAN></Id></CdtrAcct>
+        <RmtInf><Ustrd>Trade finance - Spice import contract TF-2026-044</Ustrd></RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>`;
+
+  const SINGLE_SUSPECT_HIGH = `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.03" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>MSG-2026-0219-SH01</MsgId>
+      <CreDtTm>2026-02-19T10:00:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>185000.00</CtrlSum>
+      <InitgPty>
+        <Nm>Eurobank Commercial Services</Nm>
+        <Id><OrgId><BICOrBEI>EUROBK33XXX</BICOrBEI></OrgId></Id>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>PMT-SINGLE-SUSPECT-HIGH</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>185000.00</CtrlSum>
+      <ReqdExctnDt>2026-02-20</ReqdExctnDt>
+      <Dbtr>
+        <Nm>Eurobank Commercial Services</Nm>
+        <PstlAdr>
+          <StrtNm>Rue du Commerce 28</StrtNm>
+          <PstCd>1000</PstCd>
+          <TwnNm>Brussels</TwnNm>
+          <Ctry>BE</Ctry>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAcct><Id><IBAN>BE68539007547034</IBAN></Id></DbtrAcct>
+      <DbtrAgt><FinInstnId><BIC>GEBABEBB36A</BIC></FinInstnId></DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <InstrId>INSTR-SH01</InstrId>
+          <EndToEndId>E2E-2026-SH01</EndToEndId>
+        </PmtId>
+        <Amt><InstdAmt Ccy="USD">185000.00</InstdAmt></Amt>
+        <CdtrAgt><FinInstnId><BIC>BKTRUS33XXX</BIC></FinInstnId></CdtrAgt>
+        <Cdtr>
+          <Nm>Petromax Energy Corporation</Nm>
+          <PstlAdr>
+            <StrtNm>Av. Libertador 1234</StrtNm>
+            <PstCd>1001</PstCd>
+            <TwnNm>Caracas</TwnNm>
+            <Ctry>VE</Ctry>
+          </PstlAdr>
+        </Cdtr>
+        <CdtrAcct><Id><IBAN>VE89000000001234567890</IBAN></Id></CdtrAcct>
+        <RmtInf><Ustrd>Energy consulting retainer - Q1 2026</Ustrd></RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>`;
+
   const SAMPLES = {
     simple: { name: 'Simple (3 clean payments)', xml: SIMPLE },
     mixed: { name: 'Mixed (2 clean + 3 suspicious)', xml: MIXED },
-    batch: { name: 'Batch (8 payments, multi-block)', xml: BATCH }
+    batch: { name: 'Batch (8 payments, multi-block)', xml: BATCH },
+    singleClean: { name: 'Single Payment (Clean)', xml: SINGLE_CLEAN },
+    singleSuspectLow: { name: 'Single Payment (Suspect - Low)', xml: SINGLE_SUSPECT_LOW },
+    singleSuspectHigh: { name: 'Single Payment (Suspect - High)', xml: SINGLE_SUSPECT_HIGH }
   };
 
   // --- pain.001 Parser ---

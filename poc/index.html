@@ -149,6 +149,7 @@ body {
   <a href="03-screening-flow.html">03 Screening</a>
   <a href="04-webhook-simulator.html">04 Webhooks</a>
   <a href="05-compliance-dashboard.html">05 Compliance</a>
+  <a href="#" id="resetDemo" style="margin-left:auto;color:#f87171;font-size:0.8rem;" title="Clear all session data and start fresh">Reset Demo</a>
 </nav>
 
 <div class="hero">
@@ -345,6 +346,20 @@ Corporate ERP          Payment Hub                    Bank Connector           B
   Bridger XG5 Integration POC &mdash; All API interactions are mocked in-browser. No real screening data or external services.
   <br>Built for demonstration purposes. See <a href="https://github.com/knnlrts-hq/bridger">repository</a> for documentation.
 </div>
+
+<script>
+document.getElementById('resetDemo').addEventListener('click', function(e) {
+  e.preventDefault();
+  if (!confirm('Clear all demo session data? This removes screening results, parsed payments, and mock server state.')) return;
+  ['bridger-poc-parsed', 'bridger-poc-results', 'bridger-poc-suspects', 'bridger-poc-mock-state'].forEach(function(key) {
+    sessionStorage.removeItem(key);
+  });
+  var btn = this;
+  btn.textContent = 'Cleared!';
+  btn.style.color = '#22c55e';
+  setTimeout(function() { btn.textContent = 'Reset Demo'; btn.style.color = '#f87171'; }, 1500);
+});
+</script>
 
 </body>
 </html>

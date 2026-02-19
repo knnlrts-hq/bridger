@@ -146,46 +146,75 @@ const MockBridger = (() => {
     const resultRecords = [];
 
     for (const rec of inputRecords) {
-      const resultId = nextResultId++;
-      const entity = rec.Entity || {};
-      const watchlistMatches = screenEntity(entity, rec.RecordID || resultId);
-      const hasMatches = watchlistMatches.length > 0;
-      const topScore = hasMatches ? watchlistMatches[0].EntityScore : 0;
+      // Support InputEFT: if rec.EFT is present with Type "ISO20022", decode and extract entities
+      let entitiesToScreen = [];
+      if (rec.EFT && rec.EFT.Type === 'ISO20022' && rec.EFT.Value) {
+        try {
+          const xmlStr = atob(rec.EFT.Value);
+          // Use SampleData parser if available, otherwise extract names from XML
+          if (typeof SampleData !== 'undefined' && SampleData.parsePain001) {
+            const parsed = SampleData.parsePain001(xmlStr);
+            const extracted = SampleData.paymentToEntities(parsed);
+            entitiesToScreen = extracted.map(e => e.Entity);
+          } else {
+            // Fallback: extract party names from XML directly
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xmlStr, 'text/xml');
+            const names = doc.querySelectorAll('Nm');
+            names.forEach(nm => {
+              entitiesToScreen.push({ EntityType: 'Unknown', Name: { Full: nm.textContent.trim() }, Addresses: [], IDs: [] });
+            });
+          }
+        } catch (e) {
+          // If base64 decode or parse fails, treat as empty
+          entitiesToScreen = [rec.Entity || { EntityType: 'Unknown', Name: { Full: '' }, Addresses: [], IDs: [] }];
+        }
+      } else {
+        entitiesToScreen = [rec.Entity || {}];
+      }
 
-      const record = {
-        Record: rec.RecordID || resultId,
-        ResultID: resultId,
-        RunID: runId,
-        RecordStatus: hasMatches ? 'Matches Found' : 'No Matches',
-        HasScreeningListMatches: hasMatches,
-        Details: {
-          InputEntity: entity,
-          InputName: entity.Name || {},
-          InputAddress: entity.Addresses || [],
-          InputID: entity.IDs || [],
-        },
-        WatchlistResults: watchlistMatches,
-        RecordState: {
-          AlertState: hasMatches ? 'Open' : 'Closed',
-          Status: hasMatches ? 'Pending Review' : 'Auto-Cleared',
-          AddedToAcceptList: false,
-          Division: config.AssignResultTo?.Division || 'Compliance',
-          AssignedTo: config.AssignResultTo?.RolesOrUsers || ['ComplianceTeam'],
-          AssignmentType: config.AssignResultTo?.Type || 'Role',
-          Note: '',
-          History: [{
-            Date: now,
-            Event: 'Record Created',
-            User: 'System',
-            Note: `Screening via predefined search: ${config.PredefinedSearchName || 'Default'}`
-          }],
-          MatchStates: watchlistMatches.map(m => ({ MatchID: m.WatchlistEntryId, Type: null }))
-        },
-        _meta: { topScore, inputName: entity.Name?.Full || [entity.Name?.First, entity.Name?.Last].filter(Boolean).join(' ') }
-      };
+      for (const entity of entitiesToScreen) {
+        const resultId = nextResultId++;
+        const watchlistMatches = screenEntity(entity, rec.RecordID || resultId);
+        const hasMatches = watchlistMatches.length > 0;
+        const topScore = hasMatches ? watchlistMatches[0].EntityScore : 0;
 
-      records.set(resultId, record);
-      resultRecords.push(record);
+        const record = {
+          Record: rec.RecordID || resultId,
+          ResultID: resultId,
+          RunID: runId,
+          RecordStatus: hasMatches ? 'Matches Found' : 'No Matches',
+          HasScreeningListMatches: hasMatches,
+          EFTID: rec.EFT?.EFTID || null,
+          Details: {
+            InputEntity: entity,
+            InputName: entity.Name || {},
+            InputAddress: entity.Addresses || [],
+            InputID: entity.IDs || [],
+          },
+          WatchlistResults: watchlistMatches,
+          RecordState: {
+            AlertState: hasMatches ? 'Open' : 'Closed',
+            Status: hasMatches ? 'Pending Review' : 'Auto-Cleared',
+            AddedToAcceptList: false,
+            Division: config.AssignResultTo?.Division || 'Compliance',
+            AssignedTo: config.AssignResultTo?.RolesOrUsers || ['ComplianceTeam'],
+            AssignmentType: config.AssignResultTo?.Type || 'Role',
+            Note: '',
+            History: [{
+              Date: now,
+              Event: 'Record Created',
+              User: 'System',
+              Note: `Screening via predefined search: ${config.PredefinedSearchName || 'Default'}`
+            }],
+            MatchStates: watchlistMatches.map(m => ({ MatchID: m.WatchlistEntryId, Type: null }))
+          },
+          _meta: { topScore, inputName: entity.Name?.Full || [entity.Name?.First, entity.Name?.Last].filter(Boolean).join(' ') }
+        };
+
+        records.set(resultId, record);
+        resultRecords.push(record);
+      }
     }
 
     const runInfo = {
@@ -401,6 +430,51 @@ const MockBridger = (() => {
     nextResultId = 200001;
   }
 
+  // --- State Persistence (sessionStorage) ---
+  function saveState() {
+    try {
+      const state = {
+        nextRunId,
+        nextResultId,
+        runs: Array.from(runs.entries()),
+        records: Array.from(records.entries()),
+        webhookLog: [...webhookLog]
+      };
+      sessionStorage.setItem('bridger-poc-mock-state', JSON.stringify(state));
+    } catch (e) { /* ignore quota errors */ }
+  }
+
+  function restoreState() {
+    try {
+      const raw = sessionStorage.getItem('bridger-poc-mock-state');
+      if (!raw) return false;
+      const state = JSON.parse(raw);
+      if (state.nextRunId) nextRunId = state.nextRunId;
+      if (state.nextResultId) nextResultId = state.nextResultId;
+      if (state.runs) {
+        runs.clear();
+        for (const [k, v] of state.runs) runs.set(k, v);
+      }
+      if (state.records) {
+        records.clear();
+        for (const [k, v] of state.records) records.set(k, v);
+      }
+      if (state.webhookLog) {
+        webhookLog.length = 0;
+        webhookLog.push(...state.webhookLog);
+      }
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function getRecordIds() {
+    return Array.from(records.keys());
+  }
+
+  function getRunIds() {
+    return Array.from(runs.keys());
+  }
+
   // --- Public API ---
   return {
     tokenIssue,
@@ -417,6 +491,10 @@ const MockBridger = (() => {
     applyThresholds,
     getState,
     reset,
+    saveState,
+    restoreState,
+    getRecordIds,
+    getRunIds,
     WATCHLIST,
     sha256Base64,
     hmacSha256Base64
